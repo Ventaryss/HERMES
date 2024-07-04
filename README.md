@@ -56,6 +56,9 @@ The Log Processing Infrastructure (LPI) setup script automates the deployment of
 - **rsyslog Configuration**:
   - Listens for syslog messages from remote devices (e.g., pfSense) on UDP port 514 and forwards them to Fluentd.
 
+- **pfsense Configuration**:
+  - Don't forget to put you pfsense IP adresse in the fluentb configuration file.
+
 ## Adding pfSense Logs
 
 To integrate pfSense logs into the LPI:
