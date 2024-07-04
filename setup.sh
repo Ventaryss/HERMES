@@ -187,7 +187,7 @@ scrape_configs:
   - job_name: pfsense
     static_configs:
       - targets:
-          - 10.0.200.250
+          - 0.0.0.0
         labels:
           job: pfsense
           __path__: /var/log/pfsense/*log
