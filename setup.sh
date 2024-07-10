@@ -68,6 +68,9 @@ services:
 
   promtail:
     image: grafana/promtail
+    ports:
+      - "1514:514"
+      - "1514:514/udp"
     volumes:
       - ~/LPI/promtail:/etc/promtail
       - /var/log:/var/log
@@ -87,6 +90,7 @@ services:
       - 24224:24224/udp
     volumes:
       - ~/LPI/fluentd:/fluentd/etc
+      - /var/log/pfsense:/var/log/pfsense
     command: fluentd -c /fluentd/etc/fluent.conf
     
 volumes:
@@ -144,6 +148,26 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
+  - job_name: pfsense
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: pfsense
+          __path__: /var/log/pfsense/*.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(?P<host>[^\s]+)\s+(?P<program>[^\[]+)\[(?P<pid>\d+)\]:\s+(?P<message>.*)$'
+      - regex:
+          expression: 'rule (?P<rule_number>\d+).+?(?P<action>\w+)\s+(?P<protocol>\w+)\s+from\s+(?P<src_ip>[^\s]+)\s+to\s+(?P<dst_ip>[^\s]+)\s+dst-port\s+(?P<dst_port>\d+)'
+          source: message
+      - labels:
+          action:
+          protocol:
+          src_ip:
+          dst_ip:
+          dst_port:
+
   - job_name: system
     static_configs:
       - targets:
@@ -183,14 +207,6 @@ scrape_configs:
         labels:
           job: influxdb
           __path__: /var/log/influxdb/*log
-
-  - job_name: pfsense
-    static_configs:
-      - targets:
-          - 0.0.0.0
-        labels:
-          job: pfsense
-          __path__: /var/log/pfsense/*log
 EOL
 
 # Create Fluentd configuration file
@@ -200,40 +216,50 @@ cat <<EOL > ~/LPI/fluentd/fluent.conf
   @type syslog
   port 24224
   bind 0.0.0.0
-  tag pfsense
-  <parse>
-    @type syslog
-  </parse>
+  tag syslog
 </source>
 
-<filter pfsense.**>
-  @type record_transformer
-  enable_ruby
-  <record>
-    hostname \${hostname}
-    tag \${tag}
-  </record>
+<filter syslog.**>
+  @type grep
+  <regexp>
+    key message
+    pattern /pfSense\.home\.arpa/
+  </regexp>
 </filter>
 
-<filter pfsense.**>
-  @type parser
-  key_name message
-  <parse>
-    @type regexp
-    expression /^(?<time>[^ ]+ +[^ ]+) (?<host>[^ ]+) (?<program>[^ ]+): (?<message>.*)$/
-    time_format %b %d %H:%M:%S
-  </parse>
-</filter>
-
-<match pfsense.**>
-  @type loki
-  url http://loki:3100
-  extra_labels {"job":"pfsense", "hostname":"\${hostname}"}
-  flush_interval 5s
-  flush_at_shutdown true
-  buffer_chunk_limit 1m
-  buffer_queue_limit 32
+<match syslog.**>
+  @type relabel
+  @label @pfsense
 </match>
+
+<label @pfsense>
+  <filter **>
+    @type record_transformer
+    <record>
+      job pfsense
+    </record>
+  </filter>
+
+  <filter **>
+    @type parser
+    key_name message
+    <parse>
+      @type regexp
+      expression /^(?<time>\w+\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(?<host>[^\s]+)\s+(?<program>[^\[]+)\[(?<pid>\d+)\]:\s+(?<id>\d+),,,(?<sub_rule>\d+),(?<anchor>\w+),(?<tracker>\w+),(?<interface>\w+),(?<reason>\w+),(?<action>\w+),(?<direction>\w+),(?<ip_version>[^,]+),(?<protocol>\w+),(?<protocol_id>\d+),(?<length>\d+),(?<src_ip>[^,]+),(?<dst_ip>[^,]+),(?<src_port>\d+),(?<dst_port>\d+)/
+      time_format %b %d %H:%M:%S
+    </parse>
+  </filter>
+
+  <match **>
+    @type loki
+    url http://loki:3100
+    extra_labels {"job":"pfsense"}
+    flush_interval 5s
+    flush_at_shutdown true
+    buffer_chunk_limit 1m
+    buffer_queue_limit 32
+  </match>
+</label>
 EOL
 
 # Create rsyslog configuration file
@@ -249,88 +275,15 @@ input(type="imudp" port="514")
 *.* action(type="omfwd" target="127.0.0.1" port="24224" protocol="tcp" template="RSYSLOG_SyslogProtocol23Format")
 EOL
 
-# Restart rsyslog service
+# Restart rsyslog to apply the new configuration
 sudo systemctl restart rsyslog
-sudo systemctl status rsyslog
 
-# Create Loki configuration file
-mkdir -p ~/LPI/loki
-cat <<EOL > ~/LPI/loki/loki-config.yaml
-auth_enabled: false
-
-server:
-  http_listen_port: 3100
-
-ingester:
-  lifecycler:
-    address: 127.0.0.1
-    ring:
-      kvstore:
-        store: inmemory
-      replication_factor: 1
-    final_sleep: 0s
-  chunk_idle_period: 5m
-  chunk_retain_period: 30s
-  max_transfer_retries: 0
-
-schema_config:
-  configs:
-    - from: 2020-05-15
-      store: boltdb
-      object_store: filesystem
-      schema: v11
-      index:
-        prefix: index_
-        period: 168h
-
-storage_config:
-  boltdb:
-    directory: /loki/index
-
-  filesystem:
-    directory: /loki/chunks
-
-limits_config:
-  enforce_metric_name: false
-  reject_old_samples: true
-  reject_old_samples_max_age: 168h
-
-chunk_store_config:
-  max_look_back_period: 0s
-
-table_manager:
-  retention_deletes_enabled: false
-  retention_period: 0s
-EOL
-
-# Adjust permissions for configuration files
-sudo chown $(whoami):$(whoami) ~/LPI/prometheus/prometheus.yml
-sudo chown $(whoami):$(whoami) ~/LPI/promtail/promtail-config.yaml
-sudo chown $(whoami):$(whoami) ~/LPI/fluentd/fluent.conf
-sudo chown $(whoami):$(whoami) ~/LPI/loki/loki-config.yaml
-
-# Create log extraction script
-cat <<'EOL' > ~/LPI/extract_loki_logs.sh
-#!/bin/bash
-
-LOG_DIR=~/LPI/loki-logs
-CURRENT_DATE=$(date +%Y-%m-%d)
-LAST_MONDAY=$(date -d "last-monday" +%Y-%m-%d)
-PREVIOUS_MONDAY=$(date -d "last-monday -7 days" +%Y-%m-%d)
-
-mkdir -p $LOG_DIR
-
-docker run --rm -v ~/LPI/loki-config.yaml:/etc/loki/local-config.yaml grafana/loki:latest \
-  -config.file=/etc/loki/local-config.yaml query "{job=\"pfsense\"}" --since=$PREVIOUS_MONDAY --until=$LAST_MONDAY > $LOG_DIR/pfsense_logs_$PREVIOUS_MONDAY\_to_$LAST_MONDAY.log
-EOL
-
-# Make the script executable
-chmod +x ~/LPI/extract_loki_logs.sh
-
-# Setup cron job
-(crontab -l 2>/dev/null; echo "0 6 * * 1 ~/LPI/extract_loki_logs.sh") | crontab -
-
-# Start Docker containers
+# Run Docker Compose
 cd ~/LPI
 docker compose up -d
-docker ps
+
+# Wait for services to start
+sleep 10
+
+# Print status of the services
+docker compose ps
