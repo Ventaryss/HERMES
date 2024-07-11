@@ -31,6 +31,7 @@ The project is organized as follows:
 ```plaintext
 LPI/
 ├── install.sh
+├── README.md
 ├── configs/
 │   ├── prometheus/
 │   │   └── prometheus.yml
@@ -43,15 +44,16 @@ LPI/
 ├── docker/
 │   └── docker-compose.yml
 ├── scripts/
-│   ├── install_docker.sh
-│   ├── install_docker_compose.sh
-│   ├── install_rsyslog.sh
-│   └── setup_persistence.sh
+│   ├── install_fluentd.sh
+│   ├── install_grafana.sh
+│   ├── install_loki.sh
+│   ├── install_prometheus.sh
+│   ├── install_promtail.sh
+│   └── install_rsyslog.sh
 ├── dashboards/
 │   └── default_dashboard.json
 └── client/
-    ├── install_client.sh
-    └── README.md
+    └── install_client.sh
 ```
 
 ## Services
