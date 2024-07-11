@@ -9,8 +9,6 @@
 - [Usage](#usage)
 - [Advantages](#advantages)
 - [Client Setup](#client-setup)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Introduction
 
