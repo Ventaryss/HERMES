@@ -1,77 +1,132 @@
-# Log Processing Infrastructure (LPI) Setup
+# LPI Monitoring Stack
 
-## Overview
+## Table of Contents
+- [Introduction](#introduction)
+- [Features](#features)
+- [Directory Structure](#directory-structure)
+- [Services](#services)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Advantages](#advantages)
+- [Client Setup](#client-setup)
+- [Contributing](#contributing)
+- [License](#license)
 
-The Log Processing Infrastructure (LPI) setup script automates the deployment of essential logging and monitoring components using Docker containers. It integrates Grafana for visualization, Prometheus for metrics collection, Loki for log aggregation, InfluxDB for time-series data storage, Fluentd for log forwarding, and Promtail for log scraping and forwarding. This setup enhances visibility and monitoring capabilities within your network environment.
+## Introduction
 
-## Components Deployed
+Welcome to the LPI Monitoring Stack! This project provides a comprehensive logging and monitoring solution using a combination of Grafana, Prometheus, Loki, InfluxDB, Fluentd, and more. The setup is designed for easy deployment using Docker Compose, and can be customized to fit specific monitoring needs.
 
-1. **Grafana**: Dashboard and visualization platform.
-2. **Prometheus**: Monitoring and alerting toolkit.
-3. **Loki**: Log aggregation system.
-4. **Promtail**: Log scraper and forwarder.
-5. **InfluxDB**: Time-series database.
-6. **Fluentd**: Log collector and forwarder.
+## Features
 
-## Prerequisites
+- **Centralized Logging**: Aggregate logs from multiple sources.
+- **Real-time Monitoring**: Monitor system metrics and logs in real-time.
+- **Customizable Dashboards**: Pre-configured Grafana dashboards.
+- **Persistence**: Log and data persistence to avoid data loss on container restarts.
+- **Scalable**: Easily add more services or scale existing ones.
 
-- **Docker**: Ensure Docker and Docker Compose are installed on your host system.
-- **rsyslog**: Used for receiving syslog messages and forwarding them to Fluentd.
-- **Access to pfSense logs**: Ensure pfSense is configured to send logs to the designated rsyslog server.
+## Directory Structure
 
-## Setup Steps
+The project is organized as follows:
 
-1. **Clone the Repository**:
-   ```
-   git clone <repository_url>
-   cd LPI
-   ```
+```plaintext
+LPI/
+├── install.sh
+├── configs/
+│   ├── prometheus/
+│   │   └── prometheus.yml
+│   ├── promtail/
+│   │   └── promtail-config.yaml
+│   ├── fluentd/
+│   │   └── fluent.conf
+│   └── rsyslog/
+│       └── 01-pfsense-to-fluentd.conf
+├── docker/
+│   └── docker-compose.yml
+├── scripts/
+│   ├── install_docker.sh
+│   ├── install_docker_compose.sh
+│   ├── install_rsyslog.sh
+│   └── setup_persistence.sh
+├── dashboards/
+│   └── default_dashboard.json
+└── client/
+    ├── install_client.sh
+    └── README.md
+```
 
-2. **Run the Setup Script**:
-   ```
-   ./setup.sh
-   ```
-   - This script stops and removes existing Docker containers, installs Docker Compose if not already installed, installs rsyslog if not present, creates necessary directories, generates configuration files for Grafana, Prometheus, Loki, Promtail, InfluxDB, and Fluentd, sets up rsyslog to forward logs to Fluentd, and starts all Docker containers.
+## Services
 
-3. **Verify Deployment**:
-   - Access Grafana at `http://localhost:3000` (default credentials admin/admin) to visualize metrics and logs.
-   - Prometheus is accessible at `http://localhost:9090`.
-   - Loki can be accessed at `http://localhost:3100`.
-   - InfluxDB is accessible at `http://localhost:8086`.
+- **Grafana**: Data visualization & monitoring.
+- **Prometheus**: Time-series database for metrics.
+- **Loki**: Log aggregation system.
+- **Promtail**: Log shipping for Loki.
+- **InfluxDB**: Time-series database.
+- **Fluentd**: Data collector for logs.
+- **Rsyslog**: System log collector.
 
-## Configuration Details
+## Installation
 
-- **Prometheus Configuration**:
-  - Scrapes metrics from various services including itself, Grafana, InfluxDB, Loki, and Promtail.
+### Prerequisites
 
-- **Loki Configuration**:
-  - Configured with storage options using boltdb and filesystem for storing index and log chunks respectively.
+- Docker
+- Docker Compose
 
-- **Promtail Configuration**:
-  - Scrapes logs from `/var/log` directory and forwards them to Loki based on defined scrape configurations.
+### Steps
 
-- **Fluentd Configuration**:
-  - Listens for syslog messages from rsyslog on TCP/UDP port 24224 and forwards them to Loki with additional metadata and labels.
+1. **Clone the Repository**
 
-- **rsyslog Configuration**:
-  - Listens for syslog messages from remote devices (e.g., pfSense) on UDP port 514 and forwards them to Fluentd.
+    ```bash
+    git clone https://github.com/Ventaryss/lpi-monitoring.git
+    cd lpi-monitoring
+    ```
 
-- **pfsense Configuration**:
-  - Don't forget to put you pfsense IP adresse in the promtail configuration file.
+2. **Run the Installation Script**
 
-## Adding pfSense Logs
+    ```bash
+    chmod +x install.sh
+    ./install.sh
+    ```
 
-To integrate pfSense logs into the LPI:
+This script will:
+- Stop and remove existing Docker containers related to this setup.
+- Install Docker Compose if not already installed.
+- Install `rsyslog` if not already installed.
+- Create necessary directories and set permissions.
+- Create configuration files for Prometheus, Promtail, Fluentd, and Rsyslog.
+- Start the services using Docker Compose.
 
-1. **Configure pfSense**:
-   - Navigate to pfSense web interface.
-   - Configure syslog to forward logs to the IP address of your rsyslog server (where Fluentd is listening).
+## Usage
 
-2. **Verify Logs**:
-   - Once configured, restart pfSense to start sending logs.
-   - Logs from pfSense will be forwarded to Fluentd, processed with additional labels (e.g., job: pfsense_syslog), and stored in `/var/log/pfsense` on the host system.
+After installation, you can access the services at the following URLs:
 
-## Additional Notes
+- **Grafana**: `http://localhost:3000`
+- **Prometheus**: `http://localhost:9090`
+- **Loki**: `http://localhost:3100`
+- **InfluxDB**: `http://localhost:8086`
 
-- **Monitoring and Alerting**: Utilize Grafana and Prometheus for creating custom dashboards and setting up alerts based on metrics and logs.
-- **Log Extraction**: The setup includes a scheduled job (`extract_loki_logs.sh`) to extract specific logs from Loki periodically for offline analysis.
+Log in to Grafana with the default credentials (`admin/admin`) and start customizing your dashboards.
+
+## Advantages
+
+- **Easy Deployment**: Quickly set up a comprehensive monitoring stack with a single script.
+- **Persistence**: Data and logs are persisted on the host machine to prevent data loss.
+- **Customizable**: Easily add or modify services and configurations.
+- **Pre-configured Dashboards**: Start with default Grafana dashboards tailored for your monitoring needs.
+
+## Client Setup
+
+To forward logs from client machines to this monitoring stack, follow these steps:
+
+1. **Copy the `client/install_client.sh` script to the client machine.**
+2. **Run the script on the client machine.**
+
+    ```bash
+    chmod +x install_client.sh
+    ./install_client.sh
+    ```
+
+This will set up the necessary configurations on the client machine to forward logs to the server.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request with your changes. Ensure your code adheres to the project's coding standards and include relevant tests.
