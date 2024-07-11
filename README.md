@@ -9,6 +9,7 @@
 - [Usage](#usage)
 - [Advantages](#advantages)
 - [Client Setup](#client-setup)
+- [Contributing](#contributing)
 
 ## Introduction
 
@@ -29,19 +30,15 @@ The project is organized as follows:
 ```plaintext
 LPI/
 ├── install.sh
-├── README.md
 ├── configs/
 │   ├── prometheus/
-│   │   └── prometheus.yml
 │   ├── promtail/
-│   │   └── promtail-config.yaml
 │   ├── fluentd/
-│   │   └── fluent.conf
 │   └── rsyslog/
-│       └── 01-pfsense-to-fluentd.conf
 ├── docker/
 │   └── docker-compose.yml
 ├── scripts/
+│   ├── install_docker_compose.sh
 │   ├── install_fluentd.sh
 │   ├── install_grafana.sh
 │   ├── install_loki.sh
@@ -49,7 +46,10 @@ LPI/
 │   ├── install_promtail.sh
 │   └── install_rsyslog.sh
 ├── dashboards/
-│   └── default_dashboard.json
+│   ├── loki/
+│   ├── prometheus/
+│   ├── influxDB/
+│   └── pfsense/
 └── client/
     └── install_client.sh
 ```
@@ -76,8 +76,8 @@ LPI/
 1. **Clone the Repository**
 
     ```bash
-    git clone https://github.com/Ventaryss/lpi-monitoring
-    cd lpi-monitoring
+    git clone https://github.com/your-username/LPI.git
+    cd LPI
     ```
 
 2. **Run the Installation Script**
