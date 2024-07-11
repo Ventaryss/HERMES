@@ -66,11 +66,6 @@ LPI/
 
 ## Installation
 
-### Prerequisites
-
-- Docker
-- Docker Compose
-
 ### Steps
 
 1. **Clone the Repository**
