@@ -76,7 +76,7 @@ LPI/
 1. **Clone the Repository**
 
     ```bash
-    git clone https://github.com/Ventaryss/lpi-monitoring.git
+    git clone https://github.com/Ventaryss/lpi-monitoring
     cd lpi-monitoring
     ```
 
