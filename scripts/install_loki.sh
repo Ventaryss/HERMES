@@ -1,20 +1,55 @@
 #!/bin/bash
 
-# Création des répertoires nécessaires
-mkdir -p ~/LPI/loki-storage
+# Créer le répertoire de configuration Loki
+mkdir -p ~/LPI/configs/loki
 
-# Ajouter Loki à docker-compose.yml
-cat <<EOL >> ~/LPI/docker/docker-compose.yml
+# Créer un fichier de configuration Loki par défaut
+cat <<EOL > ~/LPI/configs/loki/loki-config.yaml
+auth_enabled: false
 
-  loki:
-    image: grafana/loki
-    ports:
-      - "3100:3100"
-    volumes:
-      - ~/LPI/loki-storage:/loki
-      - ~/LPI/configs/loki:/etc/loki
-    command: -config.file=/etc/loki/loki-config.yaml
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+
+ingester:
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+    final_sleep: 0s
+  chunk_idle_period: 5m
+  chunk_block_size: 262144
+  chunk_retain_period: 1m
+  max_transfer_retries: 0
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 168h
+
+storage_config:
+  boltdb:
+    directory: /loki/index
+
+  filesystem:
+    directory: /loki/chunks
+
+limits_config:
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+chunk_store_config:
+  max_look_back_period: 0s
+
+table_manager:
+  retention_deletes_enabled: false
+  retention_period: 0s
 EOL
-
-# Copier le fichier de configuration Loki
-cp ~/LPI/configs/loki/loki-config.yaml ~/LPI/configs/loki/

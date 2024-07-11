@@ -1,27 +1,19 @@
 #!/bin/bash
 
-# Script d'installation pour les clients pour transférer les logs vers le serveur Loki
-
-SERVER_IP="IP_DU_SERVEUR"
-LOKI_PORT="3100"
-
-# Installer rsyslog si nécessaire
+# Installer rsyslog si non installé
 if ! command -v rsyslogd &> /dev/null
 then
     echo "rsyslog non trouvé. Installation..."
     sudo apt-get update
-    sudo apt-get install -y rsyslog
+    sudo apt-get install -y rsyslog rsyslog-relp
 else
     echo "rsyslog est déjà installé."
 fi
 
-# Configuration de rsyslog pour transférer les logs au serveur Loki
-sudo tee /etc/rsyslog.d/01-client-to-server.conf > /dev/null <<EOL
-# Forward logs to Loki server
-*.* action(type="omfwd" target="$SERVER_IP" port="$LOKI_PORT" protocol="tcp" template="RSYSLOG_SyslogProtocol23Format")
+# Configurer rsyslog pour transférer les logs au serveur central
+sudo tee /etc/rsyslog.d/forward-logs.conf > /dev/null <<EOL
+*.* action(type="omfwd" target="SERVER_IP" port="514" protocol="udp")
 EOL
 
-# Redémarrer rsyslog pour appliquer les changements
+# Redémarrer rsyslog pour appliquer la nouvelle configuration
 sudo systemctl restart rsyslog
-
-echo "Installation terminée. Les logs seront transférés au serveur Loki ($SERVER_IP:$LOKI_PORT)."

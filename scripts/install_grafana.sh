@@ -1,19 +1,20 @@
 #!/bin/bash
 
-# Création des répertoires nécessaires
-mkdir -p ~/LPI/grafana-storage ~/LPI/grafana-provisioning
+# Créer le répertoire de configuration Grafana
+mkdir -p ~/LPI/dashboards/grafana
 
-# Ajouter Grafana à docker-compose.yml
-cat <<EOL >> ~/LPI/docker/docker-compose.yml
-
-  grafana:
-    image: grafana/grafana
-    ports:
-      - 3000:3000
-    volumes:
-      - ~/LPI/grafana-storage:/var/lib/grafana
-      - ~/LPI/grafana-provisioning:/etc/grafana/provisioning
+# Créer un fichier de dashboard par défaut
+cat <<EOL > ~/LPI/dashboards/grafana/default_dashboard.json
+{
+  "dashboard": {
+    "id": null,
+    "uid": "default",
+    "title": "Default Dashboard",
+    "tags": [],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "panels": []
+  }
+}
 EOL
-
-# Copier les templates de dashboards
-cp ~/LPI/dashboards/* ~/LPI/grafana-provisioning/dashboards/

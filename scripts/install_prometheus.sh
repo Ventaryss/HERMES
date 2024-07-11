@@ -1,19 +1,36 @@
 #!/bin/bash
 
-# Création des répertoires nécessaires
-mkdir -p ~/LPI/prometheus-storage
+# Créer le répertoire de configuration Prometheus
+mkdir -p ~/LPI/configs/prometheus
 
-# Ajouter Prometheus à docker-compose.yml
-cat <<EOL >> ~/LPI/docker/docker-compose.yml
+# Créer un fichier de configuration Prometheus par défaut
+cat <<EOL > ~/LPI/configs/prometheus/prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
 
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - 9090:9090
-    volumes:
-      - ~/LPI/prometheus-storage:/prometheus
-      - ~/LPI/configs/prometheus:/etc/prometheus
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'influxdb'
+    static_configs:
+      - targets: ['influxdb:8086']
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+
+  - job_name: 'promtail'
+    static_configs:
+      - targets: ['promtail:9080']
 EOL
-
-# Copier le fichier de configuration Prometheus
-cp ~/LPI/configs/prometheus/prometheus.yml ~/LPI/configs/prometheus/
