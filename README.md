@@ -71,8 +71,8 @@ LPI/
 1. **Clone the Repository**
 
     ```bash
-    git clone https://github.com/your-username/LPI.git
-    cd LPI
+    git clone https://github.com/Ventaryss/lpi-monitoring
+    cd lpi-monitoring
     ```
 
 2. **Run the Installation Script**
