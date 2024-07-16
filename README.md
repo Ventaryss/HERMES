@@ -1,4 +1,4 @@
-# LPI Monitoring Stack
+# Log Processing Infrastructure (LPI) Monitoring Stack
 
 ## Table of Contents
 - [Introduction](#introduction)
