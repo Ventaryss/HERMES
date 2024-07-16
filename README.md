@@ -1,4 +1,5 @@
 # Log Processing Infrastructure (LPI) Monitoring Stack
+# MODIFIER LA CREATION DES DOSSIERS DANS INSTALL.SH
 
 ## Table of Contents
 - [Introduction](#introduction)
