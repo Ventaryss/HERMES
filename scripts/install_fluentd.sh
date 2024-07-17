@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Créer le répertoire de configuration Fluentd
+# CrÃ©er le rÃ©pertoire de configuration Fluentd
 mkdir -p ~/LPI/configs/fluentd
 
-# Créer le fichier de configuration Fluentd
+# CrÃ©er le fichier de configuration Fluentd
 cat <<EOL > ~/LPI/configs/fluentd/fluent.conf
 <source>
   @type syslog
