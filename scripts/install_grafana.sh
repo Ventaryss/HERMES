@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# CrÈer le rÈpertoire de configuration Grafana
-mkdir -p ~/LPI/dashboards/grafana
+# Cr√©er le r√©pertoire de configuration Grafana
+mkdir -p ~/LPI/dashboards_grafana/grafana
+mkdir -p ~/LPI/configs/grafana/provisioning/dashboards
 
-# CrÈer un fichier de dashboard par dÈfaut
-cat <<EOL > ~/LPI/dashboards/grafana/default_dashboard.json
+# Cr√©er un fichier de dashboard par d√©faut
+cat <<EOL > ~/LPI/dashboards_grafana/grafana/default_dashboard.json
 {
   "dashboard": {
     "id": null,
@@ -17,4 +18,18 @@ cat <<EOL > ~/LPI/dashboards/grafana/default_dashboard.json
     "panels": []
   }
 }
+EOL
+
+# Cr√©er un fichier de provisioning pour Grafana
+cat <<EOL > ~/LPI/configs/grafana/provisioning/dashboards/dashboard.yaml
+apiVersion: 1
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards
 EOL
