@@ -40,7 +40,6 @@ function install_service() {
             ./scripts/install_promtail.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
-            exit 0
             ;;
         10) exit 0 ;;
         *) echo "Option invalide." ;;
@@ -61,6 +60,11 @@ while true; do
     show_menu
     read -p "Entrez votre choix : " choice
     install_service $choice
+
+    # Si l'utilisateur choisit de quitter, sortir de la boucle
+    if [ "$choice" -eq 10 ]; then
+        break
+    fi
 done
 
 # Créer les répertoires nécessaires
