@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Créer le répertoire de configuration Promtail
+# CrÃ©er le rÃ©pertoire de configuration Promtail
 mkdir -p ~/LPI/configs/promtail
 
-# Créer un fichier de configuration Promtail par défaut
+# CrÃ©er un fichier de configuration Promtail par dÃ©faut
 cat <<EOL > ~/LPI/configs/promtail/promtail-config.yaml
 server:
   http_listen_port: 9080
@@ -75,4 +75,13 @@ scrape_configs:
         labels:
           job: influxdb
           __path__: /var/log/influxdb/*log
+
+  - job_name: client_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: client_logs
+          host: __HOSTNAME__
+          __path__: /var/log/client_logs/*.log
 EOL
