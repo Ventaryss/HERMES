@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Créer le répertoire de configuration Loki
+# CrÃ©er le rÃ©pertoire de configuration Loki
 mkdir -p ~/LPI/configs/loki
 
-# Créer un fichier de configuration Loki par défaut
+# CrÃ©er un fichier de configuration Loki par dÃ©faut
 cat <<EOL > ~/LPI/configs/loki/loki-config.yaml
 auth_enabled: false
 
