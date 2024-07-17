@@ -1,6 +1,4 @@
-# Log Processing Infrastructure (LPI) Monitoring Stack
-# MODIFIER LA CREATION DES DOSSIERS DANS INSTALL.SH
-# AJOUTER JSON POUR EMPECHER REDEMARRAGE DOCKER, DASHBOARD COMPLET (WINDOWS ET LINUX), + AJOUTER LOGS PFSENSE + NODE EXPORTER + var/pfsense + logs hostname clients + 
+# LPI Monitoring Stack
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -11,7 +9,6 @@
 - [Usage](#usage)
 - [Advantages](#advantages)
 - [Client Setup](#client-setup)
-- [Contributing](#contributing)
 
 ## Introduction
 
@@ -34,9 +31,13 @@ LPI/
 ├── install.sh
 ├── configs/
 │   ├── prometheus/
+│   │   └── prometheus.yml
 │   ├── promtail/
+│   │   └── promtail-config.yaml
 │   ├── fluentd/
+│   │   └── fluent.conf
 │   └── rsyslog/
+│       └── 01-pfsense-to-fluentd.conf
 ├── docker/
 │   └── docker-compose.yml
 ├── scripts/
@@ -46,12 +47,15 @@ LPI/
 │   ├── install_loki.sh
 │   ├── install_prometheus.sh
 │   ├── install_promtail.sh
-│   └── install_rsyslog.sh
-├── dashboards/
+│   ├── install_rsyslog.sh
+│   └── install_script_logs.sh
+├── dashboards_grafana/
 │   ├── loki/
 │   ├── prometheus/
 │   ├── influxDB/
 │   └── pfsense/
+├── loki-wal/
+├── loki-logs/
 └── client/
     └── install_client.sh
 ```
@@ -67,6 +71,11 @@ LPI/
 - **Rsyslog**: System log collector.
 
 ## Installation
+
+### Prerequisites
+
+- Docker
+- Docker Compose
 
 ### Steps
 
@@ -85,12 +94,17 @@ LPI/
     ```
 
 This script will:
+- Display a menu to select the services to install.
 - Stop and remove existing Docker containers related to this setup.
 - Install Docker Compose if not already installed.
 - Install `rsyslog` if not already installed.
 - Create necessary directories and set permissions.
 - Create configuration files for Prometheus, Promtail, Fluentd, and Rsyslog.
 - Start the services using Docker Compose.
+
+### Loki WAL
+
+Loki's WAL (Write-Ahead Log) is used to provide durability and improve performance. It ensures that incoming log entries are first written to a log file before being processed and stored. This helps in data recovery in case of a system crash or failure. The `loki-wal` directory is used to store these log files.
 
 ## Usage
 
@@ -122,7 +136,10 @@ To forward logs from client machines to this monitoring stack, follow these step
     ./install_client.sh
     ```
 
-This will set up the necessary configurations on the client machine to forward logs to the server.
+This script will:
+- Prompt the user if they want to install Node Exporter.
+- Install and configure `rsyslog` to forward logs to the central server.
+- Optionally install Node Exporter to provide system metrics to Prometheus.
 
 ## Contributing
 
