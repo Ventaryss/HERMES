@@ -74,6 +74,8 @@ LPI/
 
 ### Prerequisites
 
+(They will be installed if you don't have them)
+
 - Docker
 - Docker Compose
 
