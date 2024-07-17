@@ -10,8 +10,9 @@ function show_menu() {
     echo "5) Prometheus"
     echo "6) Promtail"
     echo "7) Rsyslog"
-    echo "8) Tous les services"
-    echo "9) Quitter"
+    echo "8) Script d'archivage des logs"
+    echo "9) Tous les services"
+    echo "10) Quitter"
 }
 
 # Fonction pour installer un service
@@ -22,10 +23,11 @@ function install_service() {
         2) ./scripts/install_fluentd.sh ;;
         3) ./scripts/install_grafana.sh ;;
         4) ./scripts/install_loki.sh ;;
-        5) ./scripts/install_prometheus.sh ;;
+        5) ./scripts.install_prometheus.sh ;;
         6) ./scripts/install_promtail.sh ;;
         7) ./scripts/install_rsyslog.sh ;;
-        8)
+        8) ./scripts/install_script_logs.sh ;;
+        9)
             ./scripts/install_docker_compose.sh
             ./scripts/install_fluentd.sh
             ./scripts/install_grafana.sh
@@ -33,8 +35,9 @@ function install_service() {
             ./scripts/install_prometheus.sh
             ./scripts/install_promtail.sh
             ./scripts/install_rsyslog.sh
+            ./scripts/install_script_logs.sh
             ;;
-        9) exit 0 ;;
+        10) exit 0 ;;
         *) echo "Option invalide." ;;
     esac
 }
@@ -47,7 +50,7 @@ while true; do
 done
 
 # Créer les répertoires nécessaires
-mkdir -p ~/LPI/loki-wal ~/LPI/loki-logs ~/LPI/dashboards/loki ~/LPI/dashboards/prometheus ~/LPI/dashboards/influxDB ~/LPI/dashboards/pfsense ~/LPI/pfsense-logs
+mkdir -p ~/LPI/loki-wal ~/LPI/loki-logs ~/LPI/dashboards_grafana/loki ~/LPI/dashboards_grafana/prometheus ~/LPI/dashboards_grafana/influxDB ~/LPI/dashboards_grafana/pfsense ~/LPI/pfsense-logs
 
 # Mettre les permissions pour le répertoire Loki WAL
 sudo chown -R 10001:10001 ~/LPI/loki-wal
