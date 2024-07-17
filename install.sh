@@ -2,7 +2,7 @@
 
 # Fonction pour afficher le menu et obtenir les choix de l'utilisateur
 function show_menu() {
-    echo "Sélectionnez les services à installer :"
+    echo "SÃ©lectionnez les services Ã  installer :"
     echo "1) Docker Compose"
     echo "2) Fluentd"
     echo "3) Grafana"
@@ -22,7 +22,7 @@ function install_service() {
         2) ./scripts/install_fluentd.sh ;;
         3) ./scripts/install_grafana.sh ;;
         4) ./scripts/install_loki.sh ;;
-        5) ./scripts.install_prometheus.sh ;;
+        5) ./scripts/install_prometheus.sh ;;
         6) ./scripts/install_promtail.sh ;;
         7) ./scripts/install_rsyslog.sh ;;
         8)
@@ -46,18 +46,18 @@ while true; do
     install_service $choice
 done
 
-# Créer les répertoires nécessaires
-mkdir -p ~/LPI/promtail ~/LPI/prometheus ~/LPI/loki ~/LPI/loki-wal ~/LPI/loki-logs ~/LPI/fluentd ~/LPI/pfsense-logs
+# CrÃ©er les rÃ©pertoires nÃ©cessaires
+mkdir -p ~/LPI/loki-wal ~/LPI/loki-logs ~/LPI/dashboards/loki ~/LPI/dashboards/prometheus ~/LPI/dashboards/influxDB ~/LPI/dashboards/pfsense ~/LPI/pfsense-logs
 
-# Mettre les permissions pour le répertoire Loki WAL
+# Mettre les permissions pour le rÃ©pertoire Loki WAL
 sudo chown -R 10001:10001 ~/LPI/loki-wal
 
-# Démarrer Docker Compose
+# DÃ©marrer Docker Compose
 cd ~/LPI/docker
 docker compose up -d
 
-# Attendre que les services démarrent
+# Attendre que les services dÃ©marrent
 sleep 10
 
-# Afficher l'état des services
+# Afficher l'Ã©tat des services
 docker compose ps
