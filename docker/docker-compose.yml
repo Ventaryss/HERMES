@@ -8,6 +8,7 @@ services:
     volumes:
       - ~/LPI/grafana-storage:/var/lib/grafana
       - ~/LPI/dashboards_grafana/grafana:/etc/grafana/provisioning/dashboards
+    restart: always
 
   prometheus:
     image: prom/prometheus
@@ -20,6 +21,7 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
+    restart: always
 
   loki:
     image: grafana/loki
@@ -30,6 +32,7 @@ services:
       - ~/LPI/configs/loki:/etc/loki
       - ~/LPI/loki-wal:/wal
     command: -config.file=/etc/loki/loki-config.yaml
+    restart: always
 
   promtail:
     image: grafana/promtail
@@ -40,6 +43,7 @@ services:
       - ~/LPI/configs/promtail:/etc/promtail
       - /var/log:/var/log
     command: -config.file=/etc/promtail/promtail-config.yaml
+    restart: always
 
   influxdb:
     image: influxdb
@@ -47,6 +51,7 @@ services:
       - 8086:8086
     volumes:
       - ~/LPI/influxdb-storage:/var/lib/influxdb
+    restart: always
 
   fluentd:
     image: grafana/fluent-plugin-loki:latest
@@ -57,3 +62,4 @@ services:
       - ~/LPI/configs/fluentd:/fluentd/etc
       - /var/log/pfsense:/var/log/pfsense
     command: fluentd -c /fluentd/etc/fluent.conf --use-v1-config
+    restart: always
