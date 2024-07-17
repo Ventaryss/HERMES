@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Convertir tous les scripts au format Unix pour éviter les problèmes d'encodage et donner les permissions d'exécution
+find . -type f -name "*.sh" -exec dos2unix {} \;
+find . -type f -name "*.sh" -exec chmod +x {} \;
+
 # Fonction pour afficher le menu et obtenir les choix de l'utilisateur
 function show_menu() {
     echo "Sélectionnez les services à installer :"
@@ -23,7 +27,7 @@ function install_service() {
         2) ./scripts/install_fluentd.sh ;;
         3) ./scripts/install_grafana.sh ;;
         4) ./scripts/install_loki.sh ;;
-        5) ./scripts.install_prometheus.sh ;;
+        5) ./scripts/install_prometheus.sh ;;
         6) ./scripts/install_promtail.sh ;;
         7) ./scripts/install_rsyslog.sh ;;
         8) ./scripts/install_script_logs.sh ;;
@@ -36,6 +40,7 @@ function install_service() {
             ./scripts/install_promtail.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
+            exit 0
             ;;
         10) exit 0 ;;
         *) echo "Option invalide." ;;
@@ -59,7 +64,7 @@ while true; do
 done
 
 # Créer les répertoires nécessaires
-mkdir -p ~/LPI/loki-wal ~/LPI/dashboards_grafana/loki ~/LPI/dashboards_grafana/prometheus ~/LPI/dashboards_grafana/influxDB ~/LPI/dashboards_grafana/pfsense
+mkdir -p ~/LPI/loki-wal ~/LPI/loki-logs ~/LPI/dashboards_grafana/loki ~/LPI/dashboards_grafana/prometheus ~/LPI/dashboards_grafana/influxDB ~/LPI/dashboards_grafana/pfsense ~/LPI/pfsense-logs
 
 # Mettre les permissions pour le répertoire Loki WAL
 sudo chown -R 10001:10001 ~/LPI/loki-wal
