@@ -42,6 +42,15 @@ function install_service() {
     esac
 }
 
+# Stop and remove existing Docker containers if they exist
+containers=$(docker ps -a -q --filter "name=loki" --filter "name=prometheus" --filter "name=grafana" --filter "name=influxdb" --filter "name=fluentd" --filter "name=promtail")
+if [ -n "$containers" ]; then
+    docker stop $containers
+    docker rm $containers
+else
+    echo "No existing containers to stop or remove."
+fi
+
 # Boucle de menu
 while true; do
     show_menu
