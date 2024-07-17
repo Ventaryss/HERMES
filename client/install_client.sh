@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Définir l'adresse IP du serveur
+SERVER_IP="0.0.0.0"  # Remplacez cette valeur par l'adresse IP de votre serveur
+
 # Fonction pour installer Node Exporter
 install_node_exporter() {
     if [ "$(uname)" == "Linux" ]; then
@@ -75,7 +78,7 @@ template(name="t_detailed" type="list") {
     constant(value="\",\"Reason\":\"") property(name="reason")
     constant(value="\"}\n")
 }
-*.* action(type="omfwd" target="SERVER_IP" port="514" protocol="udp" template="t_detailed")
+*.* action(type="omfwd" target="${SERVER_IP}" port="514" protocol="udp" template="t_detailed")
 EOL
 
 # Redémarrer rsyslog pour appliquer la nouvelle configuration
