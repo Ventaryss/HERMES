@@ -50,7 +50,7 @@ while true; do
 done
 
 # Créer les répertoires nécessaires
-mkdir -p ~/LPI/loki-wal ~/LPI/loki-logs ~/LPI/dashboards_grafana/loki ~/LPI/dashboards_grafana/prometheus ~/LPI/dashboards_grafana/influxDB ~/LPI/dashboards_grafana/pfsense ~/LPI/pfsense-logs
+mkdir -p ~/LPI/loki-wal ~/LPI/dashboards_grafana/loki ~/LPI/dashboards_grafana/prometheus ~/LPI/dashboards_grafana/influxDB ~/LPI/dashboards_grafana/pfsense
 
 # Mettre les permissions pour le répertoire Loki WAL
 sudo chown -R 10001:10001 ~/LPI/loki-wal
