@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Créer le répertoire de configuration Prometheus
+# CrÃ©er le rÃ©pertoire de configuration Prometheus
 mkdir -p ~/LPI/configs/prometheus
 
-# Créer un fichier de configuration Prometheus par défaut
+# CrÃ©er un fichier de configuration Prometheus par dÃ©faut
 cat <<EOL > ~/LPI/configs/prometheus/prometheus.yml
 global:
   scrape_interval: 15s
