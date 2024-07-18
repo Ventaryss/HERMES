@@ -6,6 +6,6 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ~/LPI/grafana-storage:/var/lib/grafana
-      - ~/LPI/dashboards_grafana/grafana:/etc/grafana/provisioning/dashboards
+      - ~/lpi-monitoring/grafana-storage:/var/lib/grafana
+      - ~/lpi-monitoring/dashboards_grafana/grafana:/etc/grafana/provisioning/dashboards
     restart: always
