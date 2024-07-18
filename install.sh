@@ -115,13 +115,13 @@ sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-mon
 # Fonction pour afficher une animation de chargement pendant le sleep
 function show_loading() {
     local duration=$1
-    local interval=0.1
+    local interval=1
     local elapsed=0
     echo -n "Vérification"
     while [ $elapsed -lt $duration ]; do
         echo -n "."
         sleep $interval
-        elapsed=$(echo "$elapsed + $interval" | bc)
+        elapsed=$((elapsed + interval))
     done
     echo ""
 }
