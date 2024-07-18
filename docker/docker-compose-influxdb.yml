@@ -7,3 +7,4 @@ services:
     volumes:
       - ~/lpi-monitoring/influxdb-storage:/var/lib/influxdb
     restart: always
+    user: "472"
