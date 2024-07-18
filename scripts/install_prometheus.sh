@@ -35,5 +35,9 @@ scrape_configs:
       - targets: ['promtail:9080']
 EOL
 
-# Use the specific docker-compose file for Prometheus
+# Définir les permissions pour l'utilisateur root
+sudo chown -R root:root ~/lpi-monitoring/configs/prometheus
+sudo chown root:root ~/lpi-monitoring/configs/prometheus/prometheus.yml
+
+# Utiliser le fichier docker-compose spécifique pour Prometheus
 docker compose -f ~/lpi-monitoring/docker/docker-compose-prometheus.yml up -d
