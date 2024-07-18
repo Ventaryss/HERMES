@@ -94,9 +94,8 @@ fi
 # Créer les répertoires nécessaires
 mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
-# Définir les bonnes permissions
-sudo chown -R 10001:10001 ~/lpi-monitoring/loki-wal
-sudo chown -R 472:472 ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
+# Définir les permissions pour root
+sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
 # Boucle de menu
