@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Créer le répertoire de configuration Loki
-mkdir -p ~/LPI/configs/loki
+mkdir -p ~/lpi-monitoring/configs/loki
 
 # Créer un fichier de configuration Loki par défaut
-cat <<EOL > ~/LPI/configs/loki/loki-config.yaml
+cat <<EOL > ~/lpi-monitoring/configs/loki/loki-config.yaml
 auth_enabled: false
 
 server:
@@ -55,4 +55,4 @@ table_manager:
 EOL
 
 # Use the specific docker-compose file for Loki
-docker compose -f ~/LPI/docker/docker-compose-loki.yml up -d
+docker compose -f ~/lpi-monitoring/docker/docker-compose-loki.yml up -d
