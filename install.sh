@@ -4,11 +4,11 @@
 function check_docker_installed() {
     if ! command -v docker &> /dev/null; then
         echo "Docker n'est pas installé. Installation de Docker..."
-        # Commandes pour installer Docker
+        # Commandes pour installer Docker sur Debian
         sudo apt-get update
         sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
         sudo apt-get update
         sudo apt-get install -y docker-ce
         sudo systemctl start docker
