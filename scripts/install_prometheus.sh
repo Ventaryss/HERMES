@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Créer le répertoire de configuration Prometheus
-mkdir -p ~/LPI/configs/prometheus
+mkdir -p ~/lpi-monitoring/configs/prometheus
 
 # Créer un fichier de configuration Prometheus par défaut
-cat <<EOL > ~/LPI/configs/prometheus/prometheus.yml
+cat <<EOL > ~/lpi-monitoring/configs/prometheus/prometheus.yml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -36,4 +36,4 @@ scrape_configs:
 EOL
 
 # Use the specific docker-compose file for Prometheus
-docker compose -f ~/LPI/docker/docker-compose-prometheus.yml up -d
+docker compose -f ~/lpi-monitoring/docker/docker-compose-prometheus.yml up -d
