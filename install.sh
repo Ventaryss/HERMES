@@ -10,7 +10,7 @@ function check_docker_installed() {
         curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
         sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
         sudo apt-get update
-        sudo apt-get install -y docker-ce
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
         sudo systemctl start docker
         sudo systemctl enable docker
         echo "Docker a été installé avec succès."
@@ -19,13 +19,13 @@ function check_docker_installed() {
     fi
 }
 
-# Fonction pour vérifier si Docker Compose est installé
+# Fonction pour vérifier si Docker Compose est installé (plugin intégré à Docker)
 function check_docker_compose_installed() {
-    if ! command -v docker-compose &> /dev/null; then
+    if ! docker compose version &> /dev/null; then
         echo "Docker Compose n'est pas installé. Installation de Docker Compose..."
-        # Commandes pour installer Docker Compose
-        sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
+        # Commandes pour installer Docker Compose comme plugin Docker
+        sudo apt-get update
+        sudo apt-get install -y docker-compose-plugin
         echo "Docker Compose a été installé avec succès."
     else
         echo "Docker Compose est déjà installé."
