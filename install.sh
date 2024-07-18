@@ -43,41 +43,38 @@ find . -type f -name "*.sh" -exec chmod +x {} \;
 # Fonction pour afficher le menu et obtenir les choix de l'utilisateur
 function show_menu() {
     echo "Sélectionnez les services à installer :"
-    echo "1) Docker Compose"
-    echo "2) Fluentd"
-    echo "3) Grafana"
-    echo "4) Loki"
-    echo "5) Prometheus"
-    echo "6) Promtail"
-    echo "7) Rsyslog"
-    echo "8) Script d'archivage des logs"
-    echo "9) Tous les services"
-    echo "10) Quitter"
+    echo "1) Fluentd"
+    echo "2) Grafana"
+    echo "3) Loki"
+    echo "4) Prometheus"
+    echo "5) Promtail"
+    echo "6) Rsyslog"
+    echo "7) Script d'archivage des logs"
+    echo "8) Tous les services"
+    echo "9) Quitter"
 }
 
 # Fonction pour installer un service
 function install_service() {
     local service=$1
     case $service in
-        1) ./scripts/install_docker_compose.sh ;;
-        2) ./scripts/install_fluentd.sh ;;
-        3) ./scripts/install_grafana.sh ;;
-        4) ./scripts/install_loki.sh ;;
-        5) ./scripts/install_prometheus.sh ;;
-        6) ./scripts.install_promtail.sh ;;
-        7) ./scripts/install_rsyslog.sh ;;
-        8) ./scripts/install_script_logs.sh ;;
-        9)
-            ./scripts/install_docker_compose.sh
+        1) ./scripts/install_fluentd.sh ;;
+        2) ./scripts/install_grafana.sh ;;
+        3) ./scripts/install_loki.sh ;;
+        4) ./scripts/install_prometheus.sh ;;
+        5) ./scripts/install_promtail.sh ;;
+        6) ./scripts/install_rsyslog.sh ;;
+        7) ./scripts/install_script_logs.sh ;;
+        8)
             ./scripts/install_fluentd.sh
             ./scripts/install_grafana.sh
             ./scripts/install_loki.sh
-            ./scripts.install_prometheus.sh
+            ./scripts/install_prometheus.sh
             ./scripts/install_promtail.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
             ;;
-        10) exit 0 ;;
+        9) exit 0 ;;
         *) echo "Option invalide." ;;
     esac
 }
@@ -98,7 +95,7 @@ while true; do
     install_service $choice
 
     # Si l'utilisateur choisit de quitter, sortir de la boucle
-    if [ "$choice" -eq 10 ]; then
+    if [ "$choice" -eq 9 ]; then
         break
     fi
 done
