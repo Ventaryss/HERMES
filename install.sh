@@ -1,5 +1,41 @@
 #!/bin/bash
 
+# Fonction pour vérifier si Docker est installé
+function check_docker_installed() {
+    if ! command -v docker &> /dev/null; then
+        echo "Docker n'est pas installé. Installation de Docker..."
+        # Commandes pour installer Docker
+        sudo apt-get update
+        sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt-get install -y docker-ce
+        sudo systemctl start docker
+        sudo systemctl enable docker
+        echo "Docker a été installé avec succès."
+    else
+        echo "Docker est déjà installé."
+    fi
+}
+
+# Fonction pour vérifier si Docker Compose est installé
+function check_docker_compose_installed() {
+    if ! command -v docker-compose &> /dev/null; then
+        echo "Docker Compose n'est pas installé. Installation de Docker Compose..."
+        # Commandes pour installer Docker Compose
+        sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        echo "Docker Compose a été installé avec succès."
+    else
+        echo "Docker Compose est déjà installé."
+    fi
+}
+
+# Vérifier l'installation de Docker et Docker Compose
+check_docker_installed
+check_docker_compose_installed
+
 # Convertir tous les scripts au format Unix pour éviter les problèmes d'encodage et donner les permissions d'exécution
 find . -type f -name "*.sh" -exec dos2unix {} \;
 find . -type f -name "*.sh" -exec chmod +x {} \;
@@ -28,7 +64,7 @@ function install_service() {
         3) ./scripts/install_grafana.sh ;;
         4) ./scripts/install_loki.sh ;;
         5) ./scripts/install_prometheus.sh ;;
-        6) ./scripts/install_promtail.sh ;;
+        6) ./scripts.install_promtail.sh ;;
         7) ./scripts/install_rsyslog.sh ;;
         8) ./scripts/install_script_logs.sh ;;
         9)
@@ -36,7 +72,7 @@ function install_service() {
             ./scripts/install_fluentd.sh
             ./scripts/install_grafana.sh
             ./scripts/install_loki.sh
-            ./scripts/install_prometheus.sh
+            ./scripts.install_prometheus.sh
             ./scripts/install_promtail.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
