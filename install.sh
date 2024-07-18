@@ -101,13 +101,13 @@ while true; do
 done
 
 # Créer les répertoires nécessaires
-mkdir -p ~/LPI/loki-wal ~/LPI/loki-logs ~/LPI/dashboards_grafana/loki ~/LPI/dashboards_grafana/prometheus ~/LPI/dashboards_grafana/influxDB ~/LPI/dashboards_grafana/pfsense ~/LPI/pfsense-logs
+mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs
 
 # Mettre les permissions pour le répertoire Loki WAL
-sudo chown -R 10001:10001 ~/LPI/loki-wal
+sudo chown -R 10001:10001 ~/lpi-monitoring/loki-wal
 
 # Démarrer Docker Compose
-cd ~/LPI/docker
+cd ~/lpi-monitoring/docker
 docker compose up -d
 
 # Attendre que les services démarrent
