@@ -6,8 +6,8 @@ services:
     ports:
       - 9090:9090
     volumes:
-      - ~/LPI/prometheus-storage:/prometheus
-      - ~/LPI/configs/prometheus:/etc/prometheus
+      - ~/lpi-monitoring/prometheus-storage:/prometheus
+      - ~/lpi-monitoring/configs/prometheus:/etc/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
