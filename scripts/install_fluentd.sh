@@ -56,4 +56,4 @@ cat <<EOL > ~/LPI/configs/fluentd/fluent.conf
 EOL
 
 # Use the specific docker-compose file for Fluentd
-docker compose -f ~/LPI/docker/docker-compose-fluentd.yml up -d
+docker compose -f ~/lpi-monitoring/docker/docker-compose-fluentd.yml up -d
