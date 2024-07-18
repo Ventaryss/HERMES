@@ -50,8 +50,9 @@ function show_menu() {
     echo "5) Promtail"
     echo "6) Rsyslog"
     echo "7) Script d'archivage des logs"
-    echo "8) Tous les services"
-    echo "9) Quitter"
+    echo "8) InfluxDB"
+    echo "9) Tous les services"
+    echo "10) Quitter"
 }
 
 # Fonction pour installer un service
@@ -65,7 +66,8 @@ function install_service() {
         5) ./scripts/install_promtail.sh ;;
         6) ./scripts/install_rsyslog.sh ;;
         7) ./scripts/install_script_logs.sh ;;
-        8)
+        8) ./scripts/install_influxdb.sh ;;
+        9)
             ./scripts/install_fluentd.sh
             ./scripts/install_grafana.sh
             ./scripts/install_loki.sh
@@ -73,8 +75,9 @@ function install_service() {
             ./scripts/install_promtail.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
+            ./scripts/install_influxdb.sh
             ;;
-        9) exit 0 ;;
+        10) exit 0 ;;
         *) echo "Option invalide." ;;
     esac
 }
@@ -95,13 +98,13 @@ while true; do
     install_service $choice
 
     # Si l'utilisateur choisit de quitter, sortir de la boucle
-    if [ "$choice" -eq 9 ]; then
+    if [ "$choice" -eq 10 ]; then
         break
     fi
 done
 
 # Créer les répertoires nécessaires
-mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs
+mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
 # Mettre les permissions pour le répertoire Loki WAL
 sudo chown -R 10001:10001 ~/lpi-monitoring/loki-wal
