@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Créer les répertoires nécessaires avec les permissions adéquates
+mkdir -p ~/lpi-monitoring/grafana-storage
+sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/grafana-storage
+sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
+
 # Créer le répertoire de configuration Grafana
 mkdir -p ~/lpi-monitoring/dashboards_grafana/grafana
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
@@ -34,11 +39,5 @@ providers:
       path: /etc/grafana/provisioning/dashboards
 EOL
 
-# Définir les permissions pour l'utilisateur root
-sudo chown -R root:root ~/lpi-monitoring/dashboards_grafana/grafana
-sudo chown -R root:root ~/lpi-monitoring/configs/grafana/provisioning/dashboards
-sudo chown root:root ~/lpi-monitoring/dashboards_grafana/grafana/default_dashboard.json
-sudo chown root:root ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
-
-# Utiliser le fichier docker-compose spécifique pour Grafana
+# Use the specific docker-compose file for Grafana
 docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d
