@@ -32,9 +32,22 @@ function check_docker_compose_installed() {
     fi
 }
 
-# Vérifier l'installation de Docker et Docker Compose
+# Fonction pour vérifier si dos2unix est installé
+function check_dos2unix_installed() {
+    if ! command -v dos2unix &> /dev/null; then
+        echo "dos2unix n'est pas installé. Installation de dos2unix..."
+        sudo apt-get update
+        sudo apt-get install -y dos2unix
+        echo "dos2unix a été installé avec succès."
+    else
+        echo "dos2unix est déjà installé."
+    fi
+}
+
+# Vérifier l'installation de Docker, Docker Compose et dos2unix
 check_docker_installed
 check_docker_compose_installed
+check_dos2unix_installed
 
 # Convertir tous les scripts au format Unix pour éviter les problèmes d'encodage et donner les permissions d'exécution
 find . -type f -name "*.sh" -exec dos2unix {} \;
@@ -73,13 +86,14 @@ function install_service() {
             ./scripts/install_loki.sh
             ./scripts/install_prometheus.sh
             ./scripts/install_promtail.sh
-            ./scripts/install_influxdb.sh
+            ./scripts.install_influxdb.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
             ;;
-        10) exit 0 ;;
+        10) return 1 ;;
         *) echo "Option invalide." ;;
     esac
+    return 0
 }
 
 # Stop and remove existing Docker containers if they exist
