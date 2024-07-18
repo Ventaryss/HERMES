@@ -98,16 +98,23 @@ while true; do
     install_service $choice
 
     # Si l'utilisateur choisit de quitter, sortir de la boucle
-    if [ "$choice" -eq 10 ]; then
-        break
+    if [ "$choice" -eq 10 ]; alors
+        pause
     fi
-done
+fait
 
 # Créer les répertoires nécessaires
 mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
-# Mettre les permissions pour le répertoire Loki WAL
+# Définir les bonnes permissions
 sudo chown -R 10001:10001 ~/lpi-monitoring/loki-wal
+sudo chown -R 472:472 ~/lpi-monitoring/loki-logs
+sudo chown -R 472:472 ~/lpi-monitoring/dashboards_grafana/loki
+sudo chown -R 472:472 ~/lpi-monitoring/dashboards_grafana/prometheus
+sudo chown -R 472:472 ~/lpi-monitoring/dashboards_grafana/influxDB
+sudo chown -R 472:472 ~/lpi-monitoring/dashboards_grafana/pfsense
+sudo chown -R 472:472 ~/lpi-monitoring/pfsense-logs
+sudo chown -R 472:472 ~/lpi-monitoring/influxdb-storage
 
 # Démarrer Docker Compose
 cd ~/lpi-monitoring/docker
