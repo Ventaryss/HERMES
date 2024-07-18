@@ -7,7 +7,7 @@ services:
       - 24224:24224
       - 24224:24224/udp
     volumes:
-      - ~/LPI/configs/fluentd:/fluentd/etc
+      - ~/lpi-monitoring/configs/fluentd:/fluentd/etc
       - /var/log/pfsense:/var/log/pfsense
     command: fluentd -c /fluentd/etc/fluent.conf --use-v1-config
     restart: always
