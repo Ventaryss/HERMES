@@ -13,4 +13,3 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
     restart: always
-    user: "472"
