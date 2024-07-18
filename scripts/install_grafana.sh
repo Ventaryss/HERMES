@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Créer le répertoire de configuration Grafana
-mkdir -p ~/LPI/dashboards_grafana/grafana
-mkdir -p ~/LPI/configs/grafana/provisioning/dashboards
+mkdir -p ~/lpi-monitoring/dashboards_grafana/grafana
+mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
 
 # Créer un fichier de dashboard par défaut
-cat <<EOL > ~/LPI/dashboards_grafana/grafana/default_dashboard.json
+cat <<EOL > ~/lpi-monitoring/dashboards_grafana/grafana/default_dashboard.json
 {
   "dashboard": {
     "id": null,
@@ -21,7 +21,7 @@ cat <<EOL > ~/LPI/dashboards_grafana/grafana/default_dashboard.json
 EOL
 
 # Créer un fichier de provisioning pour Grafana
-cat <<EOL > ~/LPI/configs/grafana/provisioning/dashboards/dashboard.yaml
+cat <<EOL > ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
 apiVersion: 1
 providers:
   - name: 'default'
@@ -35,4 +35,4 @@ providers:
 EOL
 
 # Use the specific docker-compose file for Grafana
-docker compose -f ~/LPI/docker/docker-compose-grafana.yml up -d
+docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d
