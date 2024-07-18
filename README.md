@@ -37,20 +37,27 @@ The project is organized as follows:
 LPI/
 ├── install.sh
 ├── configs/
+│   ├── grafana/
+│   ├── loki/
+│   │   └── loki-config.yaml
 │   ├── prometheus/
 │   │   └── prometheus.yml
 │   ├── promtail/
 │   │   └── promtail-config.yaml
-│   ├── fluentd/
-│   │   └── fluent.conf
-│   └── rsyslog/
-│       └── 01-pfsense-to-fluentd.conf
+│   └── fluentd/
+│       └── fluent.conf
 ├── docker/
-│   └── docker-compose.yml
+│   ├── docker-compose-fluentd.yml
+│   ├── docker-compose-grafana.yml
+│   ├── docker-compose-influxdb.yml
+│   ├── docker-compose-loki.yml
+│   ├── docker-compose-prometheus.yml
+│   ├── docker-compose-promtail.yml
+│   └── docker-compose-compose.yml
 ├── scripts/
-│   ├── install_docker_compose.sh
 │   ├── install_fluentd.sh
 │   ├── install_grafana.sh
+│   ├── install_influxdb.sh
 │   ├── install_loki.sh
 │   ├── install_prometheus.sh
 │   ├── install_promtail.sh
@@ -186,7 +193,6 @@ if $fromhost-ip != '127.0.0.1' then /var/log/client_logs/client.log
 ### Scheduled Log Archiving
 
 The `install_script_logs.sh` script sets up a cron job to archive logs weekly. It runs every Monday at 6 AM, compressing logs from the previous week and storing them in the `loki-logs` directory.
-
 
 ## Contributing
 
