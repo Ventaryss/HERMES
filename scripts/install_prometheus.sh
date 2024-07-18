@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Créer les répertoires nécessaires avec les permissions adéquates
+mkdir -p ~/lpi-monitoring/prometheus-storage
+sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/prometheus-storage
+sudo chmod -R 777 ~/lpi-monitoring/prometheus-storage
+
 # Créer le répertoire de configuration Prometheus
 mkdir -p ~/lpi-monitoring/configs/prometheus
 
@@ -35,9 +40,5 @@ scrape_configs:
       - targets: ['promtail:9080']
 EOL
 
-# Définir les permissions pour l'utilisateur root
-sudo chown -R root:root ~/lpi-monitoring/configs/prometheus
-sudo chown root:root ~/lpi-monitoring/configs/prometheus/prometheus.yml
-
-# Utiliser le fichier docker-compose spécifique pour Prometheus
+# Use the specific docker-compose file for Prometheus
 docker compose -f ~/lpi-monitoring/docker/docker-compose-prometheus.yml up -d
