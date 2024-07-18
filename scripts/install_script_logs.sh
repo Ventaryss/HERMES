@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Créer le répertoire des logs si non existant
-mkdir -p ~/LPI/loki-logs
+mkdir -p ~/lpi-monitoring/loki-logs
 
 # Créer un script pour archiver les logs de la semaine précédente
 sudo tee /usr/local/bin/archive_logs.sh > /dev/null <<EOL
