@@ -33,3 +33,6 @@ providers:
     options:
       path: /etc/grafana/provisioning/dashboards
 EOL
+
+# Use the specific docker-compose file for Grafana
+docker compose -f ~/LPI/docker/docker-compose-grafana.yml up -d
