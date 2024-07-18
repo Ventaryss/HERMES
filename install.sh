@@ -73,7 +73,7 @@ function install_service() {
             ./scripts/install_loki.sh
             ./scripts/install_prometheus.sh
             ./scripts/install_promtail.sh
-            ./scripts/install_rsyslog.sh
+            ./scripts.install_rsyslog.sh
             ./scripts/install_script_logs.sh
             ./scripts/install_influxdb.sh
             ;;
@@ -98,9 +98,10 @@ while true; do
     install_service $choice
 
     # Si l'utilisateur choisit de quitter, sortir de la boucle
-    if [ "$choice" -eq 10 ]; alors
-        pause
+    if [ "$choice" -eq 10 ]; then
+        break
     fi
+done
 
 # Créer les répertoires nécessaires
 mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
