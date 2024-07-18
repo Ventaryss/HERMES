@@ -86,7 +86,7 @@ function install_service() {
             ./scripts/install_loki.sh
             ./scripts/install_prometheus.sh
             ./scripts/install_promtail.sh
-            ./scripts.install_influxdb.sh
+            ./scripts/install_influxdb.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
             ;;
