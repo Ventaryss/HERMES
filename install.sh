@@ -48,9 +48,9 @@ function show_menu() {
     echo "3) Loki"
     echo "4) Prometheus"
     echo "5) Promtail"
-    echo "6) Rsyslog"
-    echo "7) Script d'archivage des logs"
-    echo "8) InfluxDB"
+    echo "6) InfluxDB"
+    echo "7) Rsyslog"
+    echo "8) Script d'archivage des logs"
     echo "9) Tous les services"
     echo "10) Quitter"
 }
@@ -64,18 +64,18 @@ function install_service() {
         3) ./scripts/install_loki.sh ;;
         4) ./scripts/install_prometheus.sh ;;
         5) ./scripts/install_promtail.sh ;;
-        6) ./scripts/install_rsyslog.sh ;;
-        7) ./scripts/install_script_logs.sh ;;
-        8) ./scripts/install_influxdb.sh ;;
+        6) ./scripts/install_influxdb.sh ;;
+        7) ./scripts/install_rsyslog.sh ;;
+        8) ./scripts/install_script_logs.sh ;;
         9)
             ./scripts/install_fluentd.sh
             ./scripts/install_grafana.sh
             ./scripts/install_loki.sh
             ./scripts/install_prometheus.sh
             ./scripts/install_promtail.sh
+            ./scripts/install_influxdb.sh
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
-            ./scripts/install_influxdb.sh
             ;;
         10) exit 0 ;;
         *) echo "Option invalide." ;;
