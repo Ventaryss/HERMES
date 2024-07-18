@@ -53,3 +53,6 @@ table_manager:
   retention_deletes_enabled: false
   retention_period: 0s
 EOL
+
+# Use the specific docker-compose file for Loki
+docker compose -f ~/LPI/docker/docker-compose-loki.yml up -d
