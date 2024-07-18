@@ -6,8 +6,8 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ~/LPI/loki-storage:/loki
-      - ~/LPI/configs/loki:/etc/loki
-      - ~/LPI/loki-wal:/wal
+      - ~/lpi-monitoring/loki-storage:/loki
+      - ~/lpi-monitoring/configs/loki:/etc/loki
+      - ~/lpi-monitoring/loki-wal:/wal
     command: -config.file=/etc/loki/loki-config.yaml
     restart: always
