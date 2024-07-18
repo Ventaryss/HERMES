@@ -110,10 +110,6 @@ while true; do
     fi
 done
 
-# Démarrer Docker Compose
-cd ~/lpi-monitoring/docker
-docker compose up -d
-
 # Attendre que les services démarrent
 sleep 10
 
