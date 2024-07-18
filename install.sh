@@ -112,6 +112,20 @@ mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/d
 sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
+# Fonction pour afficher une animation de chargement pendant le sleep
+function show_loading() {
+    local duration=$1
+    local interval=0.1
+    local elapsed=0
+    echo -n "Vérification"
+    while [ $elapsed -lt $duration ]; do
+        echo -n "."
+        sleep $interval
+        elapsed=$(echo "$elapsed + $interval" | bc)
+    done
+    echo ""
+}
+
 # Boucle de menu
 while true; do
     show_menu
@@ -124,8 +138,8 @@ while true; do
     fi
 done
 
-# Attendre que les services démarrent
-sleep 10
+# Afficher l'animation de chargement pendant le sleep
+show_loading 10
 
 # Afficher l'état des services
-docker compose ps
+docker ps
