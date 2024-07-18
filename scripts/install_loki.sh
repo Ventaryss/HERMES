@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Créer les répertoires nécessaires avec les permissions adéquates
+mkdir -p ~/lpi-monitoring/loki-storage ~/lpi-monitoring/loki-wal
+sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/loki-storage ~/lpi-monitoring/loki-wal
+sudo chmod -R 777 ~/lpi-monitoring/loki-storage ~/lpi-monitoring/loki-wal
+
 # Créer le répertoire de configuration Loki
 mkdir -p ~/lpi-monitoring/configs/loki
 
@@ -54,9 +59,5 @@ table_manager:
   retention_period: 0s
 EOL
 
-# Définir les permissions pour l'utilisateur root
-sudo chown -R root:root ~/lpi-monitoring/configs/loki
-sudo chown root:root ~/lpi-monitoring/configs/loki/loki-config.yaml
-
-# Utiliser le fichier docker-compose spécifique pour Loki
+# Use the specific docker-compose file for Loki
 docker compose -f ~/lpi-monitoring/docker/docker-compose-loki.yml up -d
