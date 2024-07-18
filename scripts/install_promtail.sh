@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Créer le répertoire de configuration Promtail
-mkdir -p ~/LPI/configs/promtail
+mkdir -p ~/lpi-monitoring/configs/promtail
 
 # Créer un fichier de configuration Promtail par défaut
-cat <<EOL > ~/LPI/configs/promtail/promtail-config.yaml
+cat <<EOL > ~/lpi-monitoring/configs/promtail/promtail-config.yaml
 server:
   http_listen_port: 9080
   grpc_listen_port: 9081
@@ -87,4 +87,4 @@ scrape_configs:
 EOL
 
 # Use the specific docker-compose file for Promtail
-docker compose -f ~/LPI/docker/docker-compose-promtail.yml up -d
+docker compose -f ~/lpi-monitoring/docker/docker-compose-promtail.yml up -d
