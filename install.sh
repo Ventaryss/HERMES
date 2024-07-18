@@ -32,55 +32,55 @@ function check_docker_compose_installed() {
     fi
 }
 
-# Fonction pour vérifier si dos2unix est installé
-function check_dos2unix_installed() {
-    if ! command -v dos2unix &> /dev/null; then
-        echo "dos2unix n'est pas installé. Installation de dos2unix..."
-        sudo apt-get update
-        sudo apt-get install -y dos2unix
-        echo "dos2unix a été installé avec succès."
-    else
-        echo "dos2unix est déjà installé."
-    fi
-}
-
-# Vérifier l'installation de Docker, Docker Compose et dos2unix
+# Vérifier l'installation de Docker et Docker Compose
 check_docker_installed
 check_docker_compose_installed
-check_dos2unix_installed
+
+# Vérifier l'installation de dos2unix
+if ! command -v dos2unix &> /dev/null; then
+    echo "dos2unix n'est pas installé. Installation de dos2unix..."
+    sudo apt-get update
+    sudo apt-get install -y dos2unix
+    echo "dos2unix a été installé avec succès."
+else
+    echo "dos2unix est déjà installé."
+fi
 
 # Convertir tous les scripts au format Unix pour éviter les problèmes d'encodage et donner les permissions d'exécution
 find . -type f -name "*.sh" -exec dos2unix {} \;
 find . -type f -name "*.sh" -exec chmod +x {} \;
 
-# Fonction pour afficher le menu et obtenir les choix de l'utilisateur
+# Fonction pour afficher le menu de sélection des services
 function show_menu() {
-    echo "Sélectionnez les services à installer :"
-    echo "1) Fluentd"
-    echo "2) Grafana"
-    echo "3) Loki"
-    echo "4) Prometheus"
-    echo "5) Promtail"
-    echo "6) InfluxDB"
-    echo "7) Rsyslog"
-    echo "8) Script d'archivage des logs"
-    echo "9) Tous les services"
-    echo "10) Quitter"
+    SERVICES=$(whiptail --title "Sélection des services" --checklist \
+    "Sélectionnez les services à installer :" 20 78 10 \
+    "Fluentd" "Installer Fluentd" OFF \
+    "Grafana" "Installer Grafana" OFF \
+    "Loki" "Installer Loki" OFF \
+    "Prometheus" "Installer Prometheus" OFF \
+    "Promtail" "Installer Promtail" OFF \
+    "InfluxDB" "Installer InfluxDB" OFF \
+    "Rsyslog" "Installer Rsyslog" OFF \
+    "Archivage" "Installer le script d'archivage des logs" OFF \
+    "All" "Installer tous les services" OFF \
+    3>&1 1>&2 2>&3)
+
+    echo $SERVICES
 }
 
 # Fonction pour installer un service
 function install_service() {
     local service=$1
     case $service in
-        1) ./scripts/install_fluentd.sh ;;
-        2) ./scripts/install_grafana.sh ;;
-        3) ./scripts/install_loki.sh ;;
-        4) ./scripts/install_prometheus.sh ;;
-        5) ./scripts/install_promtail.sh ;;
-        6) ./scripts/install_influxdb.sh ;;
-        7) ./scripts/install_rsyslog.sh ;;
-        8) ./scripts/install_script_logs.sh ;;
-        9)
+        Fluentd) ./scripts/install_fluentd.sh ;;
+        Grafana) ./scripts/install_grafana.sh ;;
+        Loki) ./scripts/install_loki.sh ;;
+        Prometheus) ./scripts/install_prometheus.sh ;;
+        Promtail) ./scripts/install_promtail.sh ;;
+        InfluxDB) ./scripts/install_influxdb.sh ;;
+        Rsyslog) ./scripts/install_rsyslog.sh ;;
+        Archivage) ./scripts/install_script_logs.sh ;;
+        All)
             ./scripts/install_fluentd.sh
             ./scripts/install_grafana.sh
             ./scripts/install_loki.sh
@@ -90,10 +90,8 @@ function install_service() {
             ./scripts/install_rsyslog.sh
             ./scripts/install_script_logs.sh
             ;;
-        10) return 1 ;;
-        *) echo "Option invalide." ;;
+        *) echo "Option invalide: $service" ;;
     esac
-    return 0
 }
 
 # Stop and remove existing Docker containers if they exist
@@ -112,34 +110,23 @@ mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/d
 sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
-# Fonction pour afficher une animation de chargement pendant le sleep
-function show_loading() {
-    local duration=$1
-    local interval=1
-    local elapsed=0
-    echo -n "Vérification"
-    while [ $elapsed -lt $duration ]; do
-        echo -n "."
-        sleep $interval
-        elapsed=$((elapsed + interval))
-    done
-    echo ""
-}
-
 # Boucle de menu
-while true; do
-    show_menu
-    read -p "Entrez votre choix : " choice
-    install_service $choice
+SERVICES=$(show_menu)
 
-    # Si l'utilisateur choisit de quitter, sortir de la boucle
-    if [ "$choice" -eq 10 ]; then
-        break
-    fi
+# Supprimer les guillemets et les espaces de la sortie de whiptail
+SERVICES=$(echo $SERVICES | sed 's/"//g')
+
+for service in $SERVICES; do
+    install_service $service
 done
 
-# Afficher l'animation de chargement pendant le sleep
-show_loading 10
+# Attendre que les services démarrent
+echo -n "Vérification en cours"
+for ((i=0;i<10;i++)); do
+    echo -n "."
+    sleep 1
+done
+echo
 
 # Afficher l'état des services
 docker ps
