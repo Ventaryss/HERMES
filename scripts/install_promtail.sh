@@ -85,3 +85,6 @@ scrape_configs:
           host: __HOSTNAME__
           __path__: /var/log/client_logs/*.log
 EOL
+
+# Use the specific docker-compose file for Promtail
+docker compose -f ~/LPI/docker/docker-compose-promtail.yml up -d
