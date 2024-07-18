@@ -11,4 +11,3 @@ services:
       - ~/lpi-monitoring/loki-wal:/wal
     command: -config.file=/etc/loki/loki-config.yaml
     restart: always
-    user: "472"
