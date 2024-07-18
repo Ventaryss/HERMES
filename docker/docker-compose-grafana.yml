@@ -9,3 +9,4 @@ services:
       - ~/lpi-monitoring/grafana-storage:/var/lib/grafana
       - ~/lpi-monitoring/dashboards_grafana/grafana:/etc/grafana/provisioning/dashboards
     restart: always
+    user: "472"
