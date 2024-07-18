@@ -54,5 +54,9 @@ table_manager:
   retention_period: 0s
 EOL
 
-# Use the specific docker-compose file for Loki
+# Définir les permissions pour l'utilisateur root
+sudo chown -R root:root ~/lpi-monitoring/configs/loki
+sudo chown root:root ~/lpi-monitoring/configs/loki/loki-config.yaml
+
+# Utiliser le fichier docker-compose spécifique pour Loki
 docker compose -f ~/lpi-monitoring/docker/docker-compose-loki.yml up -d
