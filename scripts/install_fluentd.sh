@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Créer le répertoire de configuration Fluentd
-mkdir -p ~/LPI/configs/fluentd
+mkdir -p ~/lpi-monitoring/configs/fluentd
 
 # Créer le fichier de configuration Fluentd
-cat <<EOL > ~/LPI/configs/fluentd/fluent.conf
+cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
 <source>
   @type syslog
   port 24224
