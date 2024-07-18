@@ -34,5 +34,11 @@ providers:
       path: /etc/grafana/provisioning/dashboards
 EOL
 
-# Use the specific docker-compose file for Grafana
+# Définir les permissions pour l'utilisateur root
+sudo chown -R root:root ~/lpi-monitoring/dashboards_grafana/grafana
+sudo chown -R root:root ~/lpi-monitoring/configs/grafana/provisioning/dashboards
+sudo chown root:root ~/lpi-monitoring/dashboards_grafana/grafana/default_dashboard.json
+sudo chown root:root ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
+
+# Utiliser le fichier docker-compose spécifique pour Grafana
 docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d
