@@ -11,7 +11,7 @@ else
 fi
 
 # Créer le répertoire de configuration rsyslog
-mkdir -p ~/LPI/configs/rsyslog
+mkdir -p ~/lpi-monitoring/configs/rsyslog
 
 # Créer le fichier de configuration rsyslog
 sudo tee /etc/rsyslog.d/01-pfsense-to-fluentd.conf > /dev/null <<EOL
