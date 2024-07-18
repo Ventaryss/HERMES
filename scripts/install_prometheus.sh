@@ -34,3 +34,6 @@ scrape_configs:
     static_configs:
       - targets: ['promtail:9080']
 EOL
+
+# Use the specific docker-compose file for Prometheus
+docker compose -f ~/LPI/docker/docker-compose-prometheus.yml up -d
