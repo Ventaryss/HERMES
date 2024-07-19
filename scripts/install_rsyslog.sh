@@ -45,10 +45,10 @@ template(name="t_detailed" type="list") {
 }
 
 # Redirect pfSense logs to a specific file
-:msg, contains, "pfSense" /var/log/pfsense/pfsense.log
+:hostname, contains, "pfSense" /var/log/pfsense/pfsense.log
 
 # Redirect client logs to /var/log/client_logs
-if \$fromhost-ip != '127.0.0.1' then /var/log/client_logs/client.log
+if \$fromhost-ip != '127.0.0.1' and \$hostname !contains "pfSense" then /var/log/client_logs/client.log
 
 # Forward all logs to Fluentd using the custom template
 *.* action(type="omfwd" target="127.0.0.1" port="24224" protocol="tcp" template="t_detailed")
