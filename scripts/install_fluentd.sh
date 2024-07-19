@@ -15,8 +15,8 @@ cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
 <filter syslog.**>
   @type grep
   <regexp>
-    key message
-    pattern /pfSense\.home\.arpa/
+    key hostname
+    pattern /pfSense/
   </regexp>
 </filter>
 
@@ -33,20 +33,46 @@ cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
     </record>
   </filter>
 
+  <match **>
+    @type loki
+    url http://loki:3100
+    extra_labels {"job":"pfsense"}
+    flush_interval 5s
+    flush_at_shutdown true
+    buffer_chunk_limit 1m
+    buffer_queue_limit 32
+  </match>
+</label>
+
+<filter syslog.**>
+  @type grep
+  <regexp>
+    key hostname
+    pattern /^((?!pfSense).)*$/
+  </regexp>
+  <regexp>
+    key hostname
+    pattern /^((?!127.0.0.1).)*$/
+  </regexp>
+</filter>
+
+<match syslog.**>
+  @type relabel
+  @label @clients
+</match>
+
+<label @clients>
   <filter **>
-    @type parser
-    key_name message
-    <parse>
-      @type regexp
-      expression /^(?<time>\w+\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(?<host>[^\s]+)\s+(?<program>[^\[]+)\[(?<pid>\d+)\]:\s+(?<id>\d+),,,(?<sub_rule>\d+),(?<anchor>\w+),(?<tracker>\w+),(?<interface>\w+),(?<reason>\w+),(?<action>\w+),(?<direction>\w+),(?<ip_version>[^,]+),(?<protocol>\w+),(?<protocol_id>\d+),(?<length>\d+),(?<src_ip>[^,]+),(?<dst_ip>[^,]+),(?<src_port>\d+),(?<dst_port>\d+)/
-      time_format %b %d %H:%M:%S
-    </parse>
+    @type record_transformer
+    <record>
+      job clients_clients
+    </record>
   </filter>
 
   <match **>
     @type loki
     url http://loki:3100
-    extra_labels {"job":"pfsense"}
+    extra_labels {"job":"clients_clients"}
     flush_interval 5s
     flush_at_shutdown true
     buffer_chunk_limit 1m
