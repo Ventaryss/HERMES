@@ -13,6 +13,14 @@ cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
 </source>
 
 <filter syslog.**>
+  @type record_transformer
+  enable_ruby
+  <record>
+    hostname \${hostname}
+  </record>
+</filter>
+
+<filter syslog.**>
   @type grep
   <regexp>
     key hostname
@@ -42,6 +50,10 @@ cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
     buffer_chunk_limit 1m
     buffer_queue_limit 32
   </match>
+
+  <match **>
+    @type null
+  </match>
 </label>
 
 <filter syslog.**>
@@ -51,7 +63,7 @@ cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
     pattern /^((?!pfSense).)*$/
   </regexp>
   <regexp>
-    key hostname
+    key source_host
     pattern /^((?!127.0.0.1).)*$/
   </regexp>
 </filter>
