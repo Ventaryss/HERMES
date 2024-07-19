@@ -1,5 +1,18 @@
 # LPI Monitoring Stack
 
+Vérifier connexion palo et storm : Configurer Palo Alto et Stormshield pour envoyer des logs vers votre serveur Fluentd:
+
+    Palo Alto:
+        Accédez à l'interface de gestion de Palo Alto.
+        Configurez un nouveau serveur syslog et définissez l'adresse IP de votre serveur Fluentd et le port 24226.
+    Stormshield:
+        Accédez à l'interface de gestion de Stormshield.
+        Configurez un nouveau serveur syslog et définissez l'adresse IP de votre serveur Fluentd et le port 24225.
+
+Puis aller sur grafana et voir dans le dashboard loki / app ; et mettre le job : palo alto ou job : stormshield
+Si jamais rien ne s'affiche dans les logs, il faut regarder le fichier /scripts/install_rsyslog.sh et /scripts/install_fluentd pour voir dans les filtres s'il modifier les parties qui détecte qui est qui (donc voir les hostnames)
+
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [Features](#features)
