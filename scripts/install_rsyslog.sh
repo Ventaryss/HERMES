@@ -52,10 +52,31 @@ if \$fromhost-ip != '127.0.0.1' and \$hostname !contains "pfSense" then /var/log
 
 # Forward all logs to Fluentd using the custom template
 *.* action(type="omfwd" target="127.0.0.1" port="24224" protocol="tcp" template="t_detailed")
+
+# Listen for Stormshield syslog messages on port 5141
+input(type="imudp" port="5141")
+
+# Redirect Stormshield logs to a specific file
+:hostname, contains, "stormshield" /var/log/stormshield/stormshield.log
+
+# Forward Stormshield logs to Fluentd
+if \$fromhost-ip != '127.0.0.1' and \$hostname contains "stormshield" then action(type="omfwd" target="127.0.0.1" port="24225" protocol="tcp" template="t_detailed")
+
+# Listen for Palo Alto syslog messages on port 5142
+input(type="imudp" port="5142")
+
+# Redirect Palo Alto logs to a specific file
+:hostname, contains, "paloalto" /var/log/paloalto/paloalto.log
+
+# Forward Palo Alto logs to Fluentd
+if \$fromhost-ip != '127.0.0.1' and \$hostname contains "paloalto" then action(type="omfwd" target="127.0.0.1" port="24226" protocol="tcp" template="t_detailed")
 EOL
 
-# Créer le répertoire pour les logs des clients
+# Créer les répertoires pour les logs des clients
 sudo mkdir -p /var/log/client_logs
+sudo mkdir -p /var/log/pfsense
+sudo mkdir -p /var/log/stormshield
+sudo mkdir -p /var/log/paloalto
 
 # Redémarrer rsyslog pour appliquer la nouvelle configuration
 sudo systemctl restart rsyslog
