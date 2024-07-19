@@ -104,11 +104,18 @@ else
 fi
 
 # Créer les répertoires nécessaires
-mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
+mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage ~/lpi-monitoring/stormshield-logs ~/lpi-monitoring/paloalto-logs
 
 # Définir les permissions pour root
-sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
-sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
+sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage ~/lpi-monitoring/stormshield-logs ~/lpi-monitoring/paloalto-logs
+sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage ~/lpi-monitoring/stormshield-logs ~/lpi-monitoring/paloalto-logs
+
+# Créer les répertoires de logs dans /var/log
+sudo mkdir -p /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
+
+# Définir les permissions pour les répertoires de logs dans /var/log
+sudo chown -R root:root /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
+sudo chmod -R 777 /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
 
 # Boucle de menu
 SERVICES=$(show_menu)
