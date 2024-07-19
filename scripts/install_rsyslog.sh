@@ -72,11 +72,5 @@ input(type="imudp" port="5142")
 if \$fromhost-ip != '127.0.0.1' and \$hostname contains "paloalto" then action(type="omfwd" target="127.0.0.1" port="24226" protocol="tcp" template="t_detailed")
 EOL
 
-# Créer les répertoires pour les logs des clients
-sudo mkdir -p /var/log/client_logs
-sudo mkdir -p /var/log/pfsense
-sudo mkdir -p /var/log/stormshield
-sudo mkdir -p /var/log/paloalto
-
 # Redémarrer rsyslog pour appliquer la nouvelle configuration
 sudo systemctl restart rsyslog
