@@ -12,6 +12,7 @@ Vérifier connexion palo et storm : Configurer Palo Alto et Stormshield pour env
 Puis aller sur grafana et voir dans le dashboard loki / app ; et mettre le job : palo alto ou job : stormshield
 Si jamais rien ne s'affiche dans les logs, il faut regarder le fichier /scripts/install_rsyslog.sh et /scripts/install_fluentd pour voir dans les filtres s'il modifier les parties qui détecte qui est qui (donc voir les hostnames)
 
+Install réperroire opt
 
 ## Table of Contents
 - [Introduction](#introduction)
