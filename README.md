@@ -13,6 +13,7 @@ Puis aller sur grafana et voir dans le dashboard loki / app ; et mettre le job :
 Si jamais rien ne s'affiche dans les logs, il faut regarder le fichier /scripts/install_rsyslog.sh et /scripts/install_fluentd pour voir dans les filtres s'il modifier les parties qui détecte qui est qui (donc voir les hostnames)
 
 Install réperroire opt
+1 ligne pour le deploiement
 
 ## Table of Contents
 - [Introduction](#introduction)
