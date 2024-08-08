@@ -14,6 +14,7 @@ Si jamais rien ne s'affiche dans les logs, il faut regarder le fichier /scripts/
 
 Install réperroire opt
 1 ligne pour le deploiement
+ajout des ref stormshirls, esxi etc
 
 ## Table of Contents
 - [Introduction](#introduction)
