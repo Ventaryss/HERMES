@@ -6,24 +6,7 @@ sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/grafana-storage
 sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
 
 # Créer le répertoire de configuration Grafana
-mkdir -p ~/lpi-monitoring/dashboards_grafana/grafana
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
-
-# Créer un fichier de dashboard par défaut
-cat <<EOL > ~/lpi-monitoring/dashboards_grafana/grafana/default_dashboard.json
-{
-  "dashboard": {
-    "id": null,
-    "uid": "default",
-    "title": "Default Dashboard",
-    "tags": [],
-    "timezone": "browser",
-    "schemaVersion": 16,
-    "version": 0,
-    "panels": []
-  }
-}
-EOL
 
 # Créer un fichier de provisioning pour Grafana
 cat <<EOL > ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
@@ -36,8 +19,46 @@ providers:
     disableDeletion: true
     updateIntervalSeconds: 30
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /var/lib/grafana/dashboards
 EOL
 
-# Use the specific docker-compose file for Grafana
-docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d
+# Créer le fichier de configuration des datasources
+mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/datasources
+
+cat <<EOF > ~/lpi-monitoring/configs/grafana/provisioning/datasources/datasource.yaml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: mydb
+    user: admin
+    password: password
+    editable: true
+EOF
+
+# Créer un Dockerfile pour inclure les dashboards
+cat <<EOF > ~/lpi-monitoring/docker/grafana/Dockerfile
+FROM grafana/grafana:latest
+COPY dashboards/ /var/lib/grafana/dashboards
+COPY configs/grafana/provisioning/dashboards /etc/grafana/provisioning/dashboards
+COPY configs/grafana/provisioning/datasources /etc/grafana/provisioning/datasources
+EOF
+
+# Copier les dashboards JSON fournis dans le répertoire des dashboards
+cp ~/dashboards_grafana/*.json ~/lpi-monitoring/dashboards_grafana/grafana/
+
+# Utiliser le fichier docker-compose spécifique pour Grafana
+docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d --build
