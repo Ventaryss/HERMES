@@ -14,26 +14,22 @@ if ! command -v influx &> /dev/null; then
 fi
 
 # Define InfluxDB parameters
-ORG_NAME="my_org"
-BUCKET_NAME="mydb"
+ORG_NAME="lpi"
+BUCKET_NAME="logs"
 INFLUXDB_USER="admin"
-INFLUXDB_PASSWORD="password"
+INFLUXDB_PASSWORD="adminadmin"
+ADMIN_TOKEN="your_admin_token"
 
-# Create an initial admin token if not set
-ADMIN_TOKEN=${ADMIN_TOKEN:-$(influx setup --username $INFLUXDB_USER --password $INFLUXDB_PASSWORD --org $ORG_NAME --bucket $BUCKET_NAME --retention 30d --force --json | jq -r '.auth.token')}
+# Create an InfluxDB organization
+influx org create -n $ORG_NAME --host http://localhost:8086 -t $ADMIN_TOKEN
 
-# Create an InfluxDB bucket (database) if not exists
-if ! influx bucket list -o $ORG_NAME --host http://localhost:8086 -t $ADMIN_TOKEN | grep -q $BUCKET_NAME; then
-    influx bucket create -n $BUCKET_NAME -o $ORG_NAME --host http://localhost:8086 -t $ADMIN_TOKEN
-fi
+# Create an InfluxDB bucket (database)
+influx bucket create -n $BUCKET_NAME -o $ORG_NAME --host http://localhost:8086 -t $ADMIN_TOKEN
 
-# Create a read/write token for the bucket if not exists
-TOKEN=$(influx auth list --org $ORG_NAME --user $INFLUXDB_USER --host http://localhost:8086 -t $ADMIN_TOKEN | grep $BUCKET_NAME | awk '{print $4}')
-
-if [ -z "$TOKEN" ]; then
-    TOKEN=$(influx auth create --org $ORG_NAME --user $INFLUXDB_USER --read-bucket $BUCKET_NAME --write-bucket $BUCKET_NAME --host http://localhost:8086 -t $ADMIN_TOKEN | grep "Token" | awk '{print $2}')
-fi
+# Create a read/write token for the bucket
+TOKEN=$(influx auth create --org $ORG_NAME --user $INFLUXDB_USER --read-bucket $BUCKET_NAME --write-bucket $BUCKET_NAME --host http://localhost:8086 -t $ADMIN_TOKEN | grep "Token" | awk '{print $2}')
 
 echo "InfluxDB has been configured."
+echo "Organization: $ORG_NAME"
 echo "Bucket: $BUCKET_NAME"
 echo "Token: $TOKEN"
