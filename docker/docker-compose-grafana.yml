@@ -2,12 +2,13 @@ version: '3.7'
 
 services:
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "3000:3000"
     volumes:
       - ~/lpi-monitoring/grafana-storage:/var/lib/grafana
+      - ~/lpi-monitoring/dashboards_grafana/grafana:/var/lib/grafana/dashboards
       - ~/lpi-monitoring/configs/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ~/lpi-monitoring/configs/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     restart: always
