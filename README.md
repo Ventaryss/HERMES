@@ -1,3 +1,6 @@
+Certainly! Here's the README with properly formatted Markdown:
+
+```markdown
 # LPI Monitoring Stack
 
 ## Introduction
@@ -21,6 +24,7 @@ Welcome to the LPI Monitoring Stack! This project provides a comprehensive loggi
 
 The project is organized as follows:
 
+```
 LPI/
 ├── install.sh
 ├── configs/
@@ -67,6 +71,7 @@ LPI/
 ├── loki-logs/
 └── client/
     └── install_client.sh
+```
 
 ## Services
 
@@ -198,7 +203,7 @@ The setup includes detailed log filtering rules to separate logs based on their 
 
 These rules are defined in the rsyslog configuration:
 
-```rsyslog
+```plaintext
 :hostname, contains, "pfSense" /var/log/pfsense/pfsense.log
 :hostname, contains, "stormshield" /var/log/stormshield/stormshield.log
 :hostname, contains, "paloalto" /var/log/paloalto/paloalto.log
@@ -225,9 +230,9 @@ INFLUXDB_USER="admin"
 INFLUXDB_PASSWORD="adminadmin"
 ```
 
-These variables will set up the InfluxDB instance and create the necessary organization and bucket. The
+These variables will set up the InfluxDB instance and create the necessary organization and bucket. The script will also output the generated token, which you
 
- script will also output the generated token, which you should use in Grafana's datasource configuration.
+ should use in Grafana's datasource configuration.
 
 ### Connecting Additional Services
 
@@ -238,3 +243,6 @@ To connect services like **Stormshield**, **Palo Alto**, or an **ESXi** host:
 - Create or update Grafana dashboards to visualize the logs and metrics from these sources.
 
 This README provides a comprehensive overview and detailed instructions for setting up and using the LPI Monitoring Stack. For more information or troubleshooting, refer to the individual service documentation included within each configuration file.
+```
+
+You can now copy and paste this formatted Markdown into your GitHub project's README file. Let me know if there's anything else you'd like to modify!
