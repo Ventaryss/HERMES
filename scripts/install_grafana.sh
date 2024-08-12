@@ -9,6 +9,9 @@ sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/datasources
 
+# Read the InfluxDB token from the file
+INFLUXDB_TOKEN=$(cat ~/lpi-monitoring/influxdb_token.txt)
+
 # Créer un fichier de provisioning pour les dashboards Grafana
 cat <<EOL > ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
 apiVersion: 1
@@ -44,10 +47,10 @@ datasources:
     url: http://influxdb:8086
     jsonData:
       version: Flux
-      organization: lpi
-      defaultBucket: logs
+      organization: $ORG_NAME
+      defaultBucket: $BUCKET_NAME
     secureJsonData:
-      token: your_influxdb_token
+      token: $INFLUXDB_TOKEN
     editable: true
 EOF
 
