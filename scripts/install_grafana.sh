@@ -44,8 +44,8 @@ datasources:
     url: http://influxdb:8086
     jsonData:
       version: Flux
-      organization: your_org_name
-      defaultBucket: your_bucket_name
+      organization: lpi
+      defaultBucket: logs
     secureJsonData:
       token: your_influxdb_token
     editable: true
