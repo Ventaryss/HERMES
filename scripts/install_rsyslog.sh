@@ -47,11 +47,8 @@ template(name="t_detailed" type="list") {
 # Redirect pfSense logs to a specific file
 :hostname, contains, "pfSense" /var/log/pfsense/pfsense.log
 
-# Redirect client logs to /var/log/client_logs
-if \$fromhost-ip != '127.0.0.1' and \$hostname !contains "pfSense" then /var/log/client_logs/client.log
-
-# Forward all logs to Fluentd using the custom template
-*.* action(type="omfwd" target="127.0.0.1" port="24224" protocol="tcp" template="t_detailed")
+# Forward pfSense logs to Fluentd using the custom template
+if \$hostname contains "pfSense" then action(type="omfwd" target="127.0.0.1" port="24224" protocol="tcp" template="t_detailed")
 
 # Listen for Stormshield syslog messages on port 5141
 input(type="imudp" port="5141")
@@ -60,7 +57,7 @@ input(type="imudp" port="5141")
 :hostname, contains, "stormshield" /var/log/stormshield/stormshield.log
 
 # Forward Stormshield logs to Fluentd
-if \$fromhost-ip != '127.0.0.1' and \$hostname contains "stormshield" then action(type="omfwd" target="127.0.0.1" port="24225" protocol="tcp" template="t_detailed")
+if \$hostname contains "stormshield" then action(type="omfwd" target="127.0.0.1" port="24225" protocol="tcp" template="t_detailed")
 
 # Listen for Palo Alto syslog messages on port 5142
 input(type="imudp" port="5142")
@@ -69,7 +66,7 @@ input(type="imudp" port="5142")
 :hostname, contains, "paloalto" /var/log/paloalto/paloalto.log
 
 # Forward Palo Alto logs to Fluentd
-if \$fromhost-ip != '127.0.0.1' and \$hostname contains "paloalto" then action(type="omfwd" target="127.0.0.1" port="24226" protocol="tcp" template="t_detailed")
+if \$hostname contains "paloalto" then action(type="omfwd" target="127.0.0.1" port="24226" protocol="tcp" template="t_detailed")
 EOL
 
 # Redémarrer rsyslog pour appliquer la nouvelle configuration
