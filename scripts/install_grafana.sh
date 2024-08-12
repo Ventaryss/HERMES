@@ -7,6 +7,7 @@ sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
 
 # Créer le répertoire de configuration Grafana
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
+mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/datasources
 
 # Créer un fichier de provisioning pour Grafana
 cat <<EOL > ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
@@ -23,8 +24,6 @@ providers:
 EOL
 
 # Créer le fichier de configuration des datasources
-mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/datasources
-
 cat <<EOF > ~/lpi-monitoring/configs/grafana/provisioning/datasources/datasource.yaml
 apiVersion: 1
 datasources:
@@ -47,14 +46,6 @@ datasources:
     user: admin
     password: password
     editable: true
-EOF
-
-# Créer un Dockerfile pour inclure les dashboards
-cat <<EOF > ~/lpi-monitoring/docker/grafana/Dockerfile
-FROM grafana/grafana:latest
-COPY dashboards/ /var/lib/grafana/dashboards
-COPY configs/grafana/provisioning/dashboards /etc/grafana/provisioning/dashboards
-COPY configs/grafana/provisioning/datasources /etc/grafana/provisioning/datasources
 EOF
 
 # Copier les dashboards JSON fournis dans le répertoire des dashboards
