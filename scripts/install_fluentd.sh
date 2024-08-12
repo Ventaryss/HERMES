@@ -57,40 +57,32 @@ cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
   </match>
 </label>
 
-# Filtre pour les logs clients, hors pfSense et localhost
+# Filtre pour les logs autres que pfSense et localhost
 <filter syslog.**>
   @type grep
   <regexp>
     key hostname
-    pattern /^((?!pfSense).)*$/
-  </regexp>
-</filter>
-
-<filter syslog.**>
-  @type grep
-  <regexp>
-    key hostname
-    pattern /^((?!127.0.0.1).)*$/
+    pattern /^((?!pfSense|127.0.0.1).)*$/
   </regexp>
 </filter>
 
 <match syslog.**>
   @type relabel
-  @label @clients
+  @label @other_logs
 </match>
 
-<label @clients>
+<label @other_logs>
   <filter **>
     @type record_transformer
     <record>
-      job clients_clients
+      job other_logs
     </record>
   </filter>
 
   <match **>
     @type loki
     url http://loki:3100
-    extra_labels {"job":"clients_clients"}
+    extra_labels {"job":"other_logs"}
     flush_interval 5s
     flush_at_shutdown true
     buffer_chunk_limit 1m
