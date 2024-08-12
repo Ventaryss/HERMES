@@ -1,4 +1,4 @@
-```
+```markdown
 # LPI Monitoring Stack
 
 ## Introduction
