@@ -104,11 +104,27 @@ else
 fi
 
 # Créer les répertoires nécessaires
-mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage ~/lpi-monitoring/stormshield-logs ~/lpi-monitoring/paloalto-logs
+mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs \
+         ~/lpi-monitoring/dashboards_grafana/loki \
+         ~/lpi-monitoring/dashboards_grafana/prometheus \
+         ~/lpi-monitoring/dashboards_grafana/influxDB \
+         ~/lpi-monitoring/dashboards_grafana/pfsense \
+         ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
 # Définir les permissions pour root
-sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage ~/lpi-monitoring/stormshield-logs ~/lpi-monitoring/paloalto-logs
-sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs ~/lpi-monitoring/dashboards_grafana/loki ~/lpi-monitoring/dashboards_grafana/prometheus ~/lpi-monitoring/dashboards_grafana/influxDB ~/lpi-monitoring/dashboards_grafana/pfsense ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage ~/lpi-monitoring/stormshield-logs ~/lpi-monitoring/paloalto-logs
+sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs \
+                       ~/lpi-monitoring/dashboards_grafana/loki \
+                       ~/lpi-monitoring/dashboards_grafana/prometheus \
+                       ~/lpi-monitoring/dashboards_grafana/influxDB \
+                       ~/lpi-monitoring/dashboards_grafana/pfsense \
+                       ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
+
+sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs \
+                 ~/lpi-monitoring/dashboards_grafana/loki \
+                 ~/lpi-monitoring/dashboards_grafana/prometheus \
+                 ~/lpi-monitoring/dashboards_grafana/influxDB \
+                 ~/lpi-monitoring/dashboards_grafana/pfsense \
+                 ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
 
 # Créer les répertoires de logs dans /var/log
 sudo mkdir -p /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
