@@ -18,7 +18,7 @@ ORG_NAME="lpi"
 BUCKET_NAME="logs"
 INFLUXDB_USER="admin"
 INFLUXDB_PASSWORD="adminadmin"
-ADMIN_TOKEN="your_admin_token"
+ADMIN_TOKEN="your_admin_token"  # Ensure this token is set up correctly in InfluxDB
 
 # Create an InfluxDB organization
 influx org create -n $ORG_NAME --host http://localhost:8086 -t $ADMIN_TOKEN
@@ -29,7 +29,10 @@ influx bucket create -n $BUCKET_NAME -o $ORG_NAME --host http://localhost:8086 -
 # Create a read/write token for the bucket
 TOKEN=$(influx auth create --org $ORG_NAME --user $INFLUXDB_USER --read-bucket $BUCKET_NAME --write-bucket $BUCKET_NAME --host http://localhost:8086 -t $ADMIN_TOKEN | grep "Token" | awk '{print $2}')
 
+# Store the token in a file for later use
+echo $TOKEN > ~/lpi-monitoring/influxdb_token.txt
+
 echo "InfluxDB has been configured."
 echo "Organization: $ORG_NAME"
 echo "Bucket: $BUCKET_NAME"
-echo "Token: $TOKEN"
+echo "Token stored in ~/lpi-monitoring/influxdb_token.txt"
