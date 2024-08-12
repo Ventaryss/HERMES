@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Créer les répertoires nécessaires avec les permissions adéquates
-mkdir -p ~/lpi-monitoring/grafana-storage
+mkdir -p ~/lpi-monitoring/grafana-storage/dashboards
 sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/grafana-storage
 sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
 
@@ -9,7 +9,7 @@ sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/datasources
 
-# Créer un fichier de provisioning pour Grafana
+# Créer un fichier de provisioning pour les dashboards Grafana
 cat <<EOL > ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
 apiVersion: 1
 providers:
@@ -42,14 +42,17 @@ datasources:
     type: influxdb
     access: proxy
     url: http://influxdb:8086
-    database: mydb
-    user: admin
-    password: password
+    jsonData:
+      version: Flux
+      organization: your_org_name
+      defaultBucket: your_bucket_name
+    secureJsonData:
+      token: your_influxdb_token
     editable: true
 EOF
 
 # Copier les dashboards JSON fournis dans le répertoire des dashboards
-cp ~/dashboards_grafana/*.json ~/lpi-monitoring/dashboards_grafana/grafana/
+cp ~/lpi-monitoring/dashboards_grafana/*.json ~/lpi-monitoring/grafana-storage/dashboards/
 
 # Utiliser le fichier docker-compose spécifique pour Grafana
 docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d --build
