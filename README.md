@@ -1,4 +1,3 @@
-```
 # LPI Monitoring Stack
 
 ## Introduction
@@ -22,7 +21,6 @@ Welcome to the LPI Monitoring Stack! This project provides a comprehensive loggi
 
 The project is organized as follows:
 
-```
 LPI/
 ├── install.sh
 ├── configs/
@@ -69,7 +67,6 @@ LPI/
 ├── loki-logs/
 └── client/
     └── install_client.sh
-```
 
 ## Services
 
