@@ -54,15 +54,14 @@ find . -type f -name "*.sh" -exec chmod +x {} \;
 function show_menu() {
     SERVICES=$(whiptail --title "Sélection des services" --checklist \
     "Sélectionnez les services à installer :" 20 78 10 \
-    "Fluentd" "Installer Fluentd" OFF \
-    "Grafana" "Installer Grafana" OFF \
-    "Loki" "Installer Loki" OFF \
-    "Prometheus" "Installer Prometheus" OFF \
-    "Promtail" "Installer Promtail" OFF \
-    "InfluxDB" "Installer InfluxDB" OFF \
-    "Rsyslog" "Installer Rsyslog" OFF \
-    "Archivage" "Installer le script d'archivage des logs" OFF \
-    "All" "Installer tous les services" OFF \
+    "Fluentd" "Installer Fluentd" ON \
+    "Grafana" "Installer Grafana" ON \
+    "Loki" "Installer Loki" ON \
+    "Prometheus" "Installer Prometheus" ON \
+    "Promtail" "Installer Promtail" ON \
+    "InfluxDB" "Installer InfluxDB" ON \
+    "Rsyslog" "Installer Rsyslog" ON \
+    "Archivage" "Installer le script d'archivage des logs" ON \
     3>&1 1>&2 2>&3)
 
     echo $SERVICES
@@ -80,16 +79,6 @@ function install_service() {
         InfluxDB) ./scripts/install_influxdb.sh ;;
         Rsyslog) ./scripts/install_rsyslog.sh ;;
         Archivage) ./scripts/install_script_logs.sh ;;
-        All)
-            ./scripts/install_fluentd.sh
-            ./scripts/install_grafana.sh
-            ./scripts/install_loki.sh
-            ./scripts/install_prometheus.sh
-            ./scripts/install_promtail.sh
-            ./scripts/install_influxdb.sh
-            ./scripts/install_rsyslog.sh
-            ./scripts/install_script_logs.sh
-            ;;
         *) echo "Option invalide: $service" ;;
     esac
 }
@@ -138,6 +127,14 @@ SERVICES=$(show_menu)
 
 # Supprimer les guillemets et les espaces de la sortie de whiptail
 SERVICES=$(echo $SERVICES | sed 's/"//g')
+
+# Tri des services pour garantir l'ordre d'installation
+declare -A order
+order=( ["InfluxDB"]=1 ["Grafana"]=2 ["Prometheus"]=3 ["Loki"]=4 ["Promtail"]=5 ["Fluentd"]=6 ["Rsyslog"]=7 ["Archivage"]=8 )
+IFS=$'\n'
+SERVICES=$(echo $SERVICES | tr ' ' '\n' | sort -k1,1 -k2,2n | while read service; do
+    echo "${order[$service]} $service"
+done | sort -k1,1n | cut -d' ' -f2)
 
 for service in $SERVICES; do
     install_service $service
