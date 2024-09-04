@@ -1,12 +1,22 @@
 #!/bin/bash
 
+# Fonction pour vérifier l'exécution des commandes
+check_command() {
+    if [ $? -ne 0 ]; then
+        echo "Erreur : $1 a échoué." >&2
+        exit 1
+    fi
+}
+
 # Créer les répertoires nécessaires avec les permissions adéquates
 mkdir -p ~/lpi-monitoring/grafana-storage
+check_command "Création du répertoire grafana-storage"
 sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/grafana-storage
 sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
 
 # Créer le répertoire de configuration Grafana
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
+check_command "Création du répertoire de configuration Grafana"
 
 # Créer un fichier de provisioning pour Grafana
 cat <<EOL > ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
@@ -21,12 +31,15 @@ providers:
     options:
       path: /var/lib/grafana/dashboards
 EOL
+check_command "Création du fichier de provisioning pour Grafana"
 
 # Créer le fichier de configuration des datasources
 mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/datasources
+check_command "Création du répertoire des datasources"
 
-# Retrieve the InfluxDB token from the environment
+# Récupérer le token InfluxDB à partir de l'environnement
 INFLUXDB_TOKEN=$(influx auth list --json | jq -r '.[0].token')
+check_command "Récupération du token InfluxDB"
 
 cat <<EOF > ~/lpi-monitoring/configs/grafana/provisioning/datasources/datasource.yaml
 apiVersion: 1
@@ -54,6 +67,7 @@ datasources:
       token: $INFLUXDB_TOKEN
     editable: true
 EOF
+check_command "Création du fichier de configuration des datasources"
 
 # Créer un Dockerfile pour inclure les dashboards
 cat <<EOF > ~/lpi-monitoring/docker/grafana/Dockerfile
@@ -62,9 +76,34 @@ COPY dashboards/ /var/lib/grafana/dashboards
 COPY configs/grafana/provisioning/dashboards /etc/grafana/provisioning/dashboards
 COPY configs/grafana/provisioning/datasources /etc/grafana/provisioning/datasources
 EOF
+check_command "Création du Dockerfile pour Grafana"
 
 # Copier les dashboards JSON fournis dans le répertoire des dashboards
 cp ~/dashboards_grafana/*.json ~/lpi-monitoring/dashboards_grafana/grafana/
+check_command "Copie des dashboards JSON"
 
 # Utiliser le fichier docker-compose spécifique pour Grafana
 docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d --build
+check_command "Démarrage de Grafana avec Docker Compose"
+
+# Configuration de Logrotate pour l'archivage des logs
+LOGROTATE_CONF="/etc/logrotate.d/grafana_logs"
+sudo tee $LOGROTATE_CONF > /dev/null <<EOL
+/var/log/grafana/*.log {
+    weekly
+    missingok
+    rotate 4
+    compress
+    delaycompress
+    dateext
+    dateformat _Semaine_%V
+    olddir /path/to/Archives_Logs/grafana_logs_archives/
+    create 640 grafana grafana
+    notifempty
+    sharedscripts
+    postrotate
+        systemctl restart grafana-server
+    endscript
+}
+EOL
+check_command "Configuration de Logrotate pour Grafana"

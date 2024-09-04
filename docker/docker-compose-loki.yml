@@ -2,12 +2,19 @@ version: '3'
 
 services:
   loki:
-    image: grafana/loki
+    image: grafana/loki:latest
     ports:
       - "3100:3100"
     volumes:
-      - ~/lpi-monitoring/loki-storage:/loki
-      - ~/lpi-monitoring/configs/loki:/etc/loki
-      - ~/lpi-monitoring/loki-wal:/wal
+      - ~/lpi-monitoring/loki-storage:/loki:rw
+      - ~/lpi-monitoring/configs/loki:/etc/loki:ro
+      - ~/lpi-monitoring/loki-wal:/wal:rw
     command: -config.file=/etc/loki/loki-config.yaml
-    restart: always
+    environment:
+      - LOKI_PATH=/loki
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

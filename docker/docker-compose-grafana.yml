@@ -6,8 +6,17 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ~/lpi-monitoring/grafana-storage:/var/lib/grafana
-      - ~/lpi-monitoring/configs/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ~/lpi-monitoring/configs/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ~/lpi-monitoring/grafana-storage/dashboards:/var/lib/grafana/dashboards
-    restart: always
+      - ~/lpi-monitoring/grafana-storage:/var/lib/grafana:rw
+      - ~/lpi-monitoring/configs/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ~/lpi-monitoring/configs/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ~/lpi-monitoring/grafana-storage/dashboards:/var/lib/grafana/dashboards:rw
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

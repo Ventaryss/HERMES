@@ -2,12 +2,17 @@ version: '3'
 
 services:
   promtail:
-    image: grafana/promtail
+    image: grafana/promtail:latest
     ports:
       - "1514:514"
       - "1514:514/udp"
     volumes:
-      - ~/lpi-monitoring/configs/promtail:/etc/promtail
-      - /var/log:/var/log
+      - ~/lpi-monitoring/configs/promtail:/etc/promtail:ro
+      - /var/log:/var/log:rw
     command: -config.file=/etc/promtail/promtail-config.yaml
-    restart: always
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

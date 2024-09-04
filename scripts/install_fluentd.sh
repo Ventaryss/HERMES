@@ -1,7 +1,16 @@
 #!/bin/bash
 
+# Fonction pour vérifier l'exécution des commandes
+check_command() {
+    if [ $? -ne 0 ]; then
+        echo "Erreur : $1 a échoué." >&2
+        exit 1
+    fi
+}
+
 # Créer le répertoire de configuration Fluentd
 mkdir -p ~/lpi-monitoring/configs/fluentd
+check_command "Création du répertoire de configuration Fluentd"
 
 # Créer le fichier de configuration Fluentd
 cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
@@ -140,6 +149,30 @@ cat <<EOL > ~/lpi-monitoring/configs/fluentd/fluent.conf
   buffer_queue_limit 32
 </match>
 EOL
+check_command "Création du fichier de configuration Fluentd"
 
-# Use the specific docker-compose file for Fluentd
+# Utiliser le fichier docker-compose spécifique pour Fluentd
 docker compose -f ~/lpi-monitoring/docker/docker-compose-fluentd.yml up -d
+check_command "Démarrage de Fluentd avec Docker Compose"
+
+# Configuration de Logrotate pour l'archivage des logs
+LOGROTATE_CONF="/etc/logrotate.d/fluentd_logs"
+sudo tee $LOGROTATE_CONF > /dev/null <<EOL
+/var/log/fluentd/*.log {
+    weekly
+    missingok
+    rotate 4
+    compress
+    delaycompress
+    dateext
+    dateformat _Semaine_%V
+    olddir /path/to/Archives_Logs/fluentd_logs_archives/
+    create 640 root adm
+    notifempty
+    sharedscripts
+    postrotate
+        systemctl restart docker
+    endscript
+}
+EOL
+check_command "Configuration de Logrotate pour Fluentd"

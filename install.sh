@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Fonction pour vérifier l'exécution des commandes
+check_command() {
+    if [ $? -ne 0 ]; then
+        echo "Erreur : $1 a échoué." >&2
+        exit 1
+    fi
+}
+
 # Fonction pour vérifier si Docker est installé
 function check_docker_installed() {
     if ! command -v docker &> /dev/null; then
@@ -13,7 +21,7 @@ function check_docker_installed() {
         sudo apt-get install -y docker-ce docker-ce-cli containerd.io
         sudo systemctl start docker
         sudo systemctl enable docker
-        echo "Docker a été installé avec succès."
+        check_command "Installation de Docker"
     else
         echo "Docker est déjà installé."
     fi
@@ -26,7 +34,7 @@ function check_docker_compose_installed() {
         # Commandes pour installer Docker Compose comme plugin Docker
         sudo apt-get update
         sudo apt-get install -y docker-compose-plugin
-        echo "Docker Compose a été installé avec succès."
+        check_command "Installation de Docker Compose"
     else
         echo "Docker Compose est déjà installé."
     fi
@@ -41,14 +49,13 @@ if ! command -v dos2unix &> /dev/null; then
     echo "dos2unix n'est pas installé. Installation de dos2unix..."
     sudo apt-get update
     sudo apt-get install -y dos2unix
-    echo "dos2unix a été installé avec succès."
+    check_command "Installation de dos2unix"
 else
     echo "dos2unix est déjà installé."
 fi
 
 # Convertir tous les scripts au format Unix pour éviter les problèmes d'encodage et donner les permissions d'exécution
-find . -type f -name "*.sh" -exec dos2unix {} \;
-find . -type f -name "*.sh" -exec chmod +x {} \;
+find . -type f -name "*.sh" -exec dos2unix {} \; -exec chmod +x {} \;
 
 # Fonction pour afficher le menu de sélection des services
 function show_menu() {
@@ -88,8 +95,9 @@ containers=$(docker ps -a -q --filter "name=loki" --filter "name=prometheus" --f
 if [ -n "$containers" ]; then
     docker stop $containers
     docker rm $containers
+    check_command "Arrêt et suppression des conteneurs existants"
 else
-    echo "No existing containers to stop or remove."
+    echo "Aucun conteneur existant à arrêter ou supprimer."
 fi
 
 # Créer les répertoires nécessaires
@@ -99,28 +107,18 @@ mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs \
          ~/lpi-monitoring/dashboards_grafana/influxDB \
          ~/lpi-monitoring/dashboards_grafana/pfsense \
          ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
+check_command "Création des répertoires nécessaires"
 
 # Définir les permissions pour root
-sudo chown -R root:root ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs \
-                       ~/lpi-monitoring/dashboards_grafana/loki \
-                       ~/lpi-monitoring/dashboards_grafana/prometheus \
-                       ~/lpi-monitoring/dashboards_grafana/influxDB \
-                       ~/lpi-monitoring/dashboards_grafana/pfsense \
-                       ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
-
-sudo chmod -R 777 ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs \
-                 ~/lpi-monitoring/dashboards_grafana/loki \
-                 ~/lpi-monitoring/dashboards_grafana/prometheus \
-                 ~/lpi-monitoring/dashboards_grafana/influxDB \
-                 ~/lpi-monitoring/dashboards_grafana/pfsense \
-                 ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
+sudo chown -R root:root ~/lpi-monitoring/*
+sudo chmod -R 777 ~/lpi-monitoring/*
+check_command "Définition des permissions pour les répertoires de monitoring"
 
 # Créer les répertoires de logs dans /var/log
 sudo mkdir -p /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
-
-# Définir les permissions pour les répertoires de logs dans /var/log
-sudo chown -R root:root /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
-sudo chmod -R 777 /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
+sudo chown -R root:root /var/log/*
+sudo chmod -R 777 /var/log/*
+check_command "Création et configuration des répertoires de logs dans /var/log"
 
 # Boucle de menu
 SERVICES=$(show_menu)

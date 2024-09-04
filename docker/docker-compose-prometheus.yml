@@ -2,14 +2,19 @@ version: '3'
 
 services:
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     ports:
       - 9090:9090
     volumes:
-      - ~/lpi-monitoring/prometheus-storage:/prometheus
-      - ~/lpi-monitoring/configs/prometheus:/etc/prometheus
+      - ~/lpi-monitoring/prometheus-storage:/prometheus:rw
+      - ~/lpi-monitoring/configs/prometheus:/etc/prometheus:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
-    restart: always
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

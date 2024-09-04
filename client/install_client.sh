@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Fonction pour vérifier l'exécution des commandes
+check_command() {
+    if [ $? -ne 0 ]; then
+        echo "Erreur : $1 a échoué." >&2
+        exit 1
+    fi
+}
+
 # Définir l'adresse IP du serveur
 SERVER_IP="0.0.0.0"  # Remplacez cette valeur par l'adresse IP de votre serveur
 
@@ -9,9 +17,15 @@ install_node_exporter() {
         echo "Installation de Node Exporter sur Linux"
         # Télécharger et installer Node Exporter
         curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.1.2/node_exporter-1.1.2.linux-amd64.tar.gz
+        check_command "Téléchargement de Node Exporter"
         tar xvf node_exporter-1.1.2.linux-amd64.tar.gz
+        check_command "Extraction de Node Exporter"
         sudo mv node_exporter-1.1.2.linux-amd64/node_exporter /usr/local/bin/
         rm -rf node_exporter-1.1.2.linux-amd64*
+        
+        # Créer un utilisateur pour Node Exporter
+        sudo useradd --no-create-home --shell /bin/false node_exporter
+        
         # Créer un service systemd pour Node Exporter
         sudo tee /etc/systemd/system/node_exporter.service > /dev/null <<EOL
 [Unit]
@@ -25,21 +39,26 @@ ExecStart=/usr/local/bin/node_exporter
 [Install]
 WantedBy=default.target
 EOL
-        # Créer un utilisateur pour Node Exporter
-        sudo useradd --no-create-home --shell /bin/false node_exporter
+        check_command "Création du service systemd pour Node Exporter"
+
         sudo systemctl daemon-reload
         sudo systemctl start node_exporter
         sudo systemctl enable node_exporter
+        check_command "Démarrage du service Node Exporter"
+
     elif [ "$(uname)" == "Windows_NT" ]; then
         echo "Installation de Node Exporter sur Windows"
         # Télécharger et installer Node Exporter pour Windows
         curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.1.2/node_exporter-1.1.2.windows-amd64.zip
+        check_command "Téléchargement de Node Exporter pour Windows"
         unzip node_exporter-1.1.2.windows-amd64.zip
         mv node_exporter-1.1.2.windows-amd64/node_exporter.exe /c/Windows/System32/
         rm -rf node_exporter-1.1.2.windows-amd64*
+        
         # Créer un service pour Node Exporter
         sc.exe create NodeExporter binPath= "C:\Windows\System32\node_exporter.exe" start= auto
         sc.exe start NodeExporter
+        check_command "Création et démarrage du service Node Exporter sur Windows"
     fi
 }
 
@@ -47,11 +66,11 @@ EOL
 read -p "Voulez-vous installer Node Exporter (y/n) ? " install_node_exporter_choice
 
 # Installer rsyslog si non installé
-if ! command -v rsyslogd &> /dev/null
-then
+if ! command -v rsyslogd &> /dev/null; then
     echo "rsyslog non trouvé. Installation..."
     sudo apt-get update
     sudo apt-get install -y rsyslog rsyslog-relp
+    check_command "Installation de rsyslog"
 else
     echo "rsyslog est déjà installé."
 fi
@@ -80,9 +99,11 @@ template(name="t_detailed" type="list") {
 }
 *.* action(type="omfwd" target="${SERVER_IP}" port="514" protocol="udp" template="t_detailed")
 EOL
+check_command "Configuration de rsyslog pour transférer les logs"
 
 # Redémarrer rsyslog pour appliquer la nouvelle configuration
 sudo systemctl restart rsyslog
+check_command "Redémarrage de rsyslog"
 
 # Installer Node Exporter si l'utilisateur le souhaite
 if [ "$install_node_exporter_choice" == "y" ]; then
