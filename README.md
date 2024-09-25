@@ -208,6 +208,4 @@ This stack supports integration with various firewalls such as **pfSense**, **Pa
 
 ## **Contributing**
 
-Contributions are welcome! Please fork the repository, make your changes, and submit a pull request. Ensure your code adheres to the project's coding
-
- standards and includes relevant tests.
+Contributions are welcome! Please fork the repository, make your changes, and submit a pull request. Ensure your code adheres to the project's coding standards and includes relevant tests.
