@@ -1,25 +1,36 @@
 #!/bin/bash
 
+# Activer le mode strict pour bash
+set -euo pipefail
+
+# Fonction de journalisation
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
 # Fonction pour vérifier l'exécution des commandes
 check_command() {
-    if [ $? -ne 0 ]; then
-        echo "Erreur : $1 a échoué." >&2
+    if [[ $? -ne 0 ]]; then
+        log "Erreur : $1 a échoué." >&2
         exit 1
     fi
 }
 
+# Définir le répertoire de base
+BASE_DIR="${HOME}/lpi-monitoring"
+
 # Créer les répertoires nécessaires avec les permissions adéquates
-mkdir -p ~/lpi-monitoring/loki-storage ~/lpi-monitoring/loki-wal
+mkdir -p "${BASE_DIR}/loki-storage" "${BASE_DIR}/loki-wal"
 check_command "Création des répertoires loki-storage et loki-wal"
-sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/loki-storage ~/lpi-monitoring/loki-wal
-sudo chmod -R 777 ~/lpi-monitoring/loki-storage ~/lpi-monitoring/loki-wal
+sudo chown -R "$(id -u):$(id -g)" "${BASE_DIR}/loki-storage" "${BASE_DIR}/loki-wal"
+sudo chmod -R 750 "${BASE_DIR}/loki-storage" "${BASE_DIR}/loki-wal"
 
 # Créer le répertoire de configuration Loki
-mkdir -p ~/lpi-monitoring/configs/loki
+mkdir -p "${BASE_DIR}/configs/loki"
 check_command "Création du répertoire de configuration Loki"
 
 # Créer un fichier de configuration Loki par défaut
-cat <<EOL > ~/lpi-monitoring/configs/loki/loki-config.yaml
+cat <<EOL > "${BASE_DIR}/configs/loki/loki-config.yaml"
 auth_enabled: false
 
 server:
@@ -71,12 +82,19 @@ EOL
 check_command "Création du fichier de configuration Loki"
 
 # Utiliser le fichier docker-compose spécifique pour Loki
-docker compose -f ~/lpi-monitoring/docker/docker-compose-loki.yml up -d
+docker compose -f "${BASE_DIR}/docker/docker-compose-loki.yml" up -d
 check_command "Démarrage de Loki avec Docker Compose"
 
 # Configuration de Logrotate pour l'archivage des logs
 LOGROTATE_CONF="/etc/logrotate.d/loki_logs"
-sudo tee $LOGROTATE_CONF > /dev/null <<EOL
+ARCHIVE_DIR="/path/to/Archives_Logs/loki_logs_archives/"
+
+# S'assurer que le répertoire d'archives existe
+sudo mkdir -p "$ARCHIVE_DIR"
+sudo chown loki:loki "$ARCHIVE_DIR"
+sudo chmod 750 "$ARCHIVE_DIR"
+
+sudo tee "$LOGROTATE_CONF" > /dev/null <<EOL
 /var/log/loki/*.log {
     weekly
     missingok
@@ -84,8 +102,8 @@ sudo tee $LOGROTATE_CONF > /dev/null <<EOL
     compress
     delaycompress
     dateext
-    dateformat _Semaine_%V
-    olddir /path/to/Archives_Logs/loki_logs_archives/
+    dateformat _%Y%m%d
+    olddir ${ARCHIVE_DIR}
     create 640 loki loki
     notifempty
     sharedscripts
@@ -95,3 +113,5 @@ sudo tee $LOGROTATE_CONF > /dev/null <<EOL
 }
 EOL
 check_command "Configuration de Logrotate pour Loki"
+
+log "Installation et configuration de Loki terminées avec succès."
