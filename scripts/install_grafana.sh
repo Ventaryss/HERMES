@@ -1,25 +1,36 @@
 #!/bin/bash
 
+# Activer le mode strict pour bash
+set -euo pipefail
+
+# Fonction de journalisation
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
 # Fonction pour vérifier l'exécution des commandes
 check_command() {
-    if [ $? -ne 0 ]; then
-        echo "Erreur : $1 a échoué." >&2
+    if [[ $? -ne 0 ]]; then
+        log "Erreur : $1 a échoué." >&2
         exit 1
     fi
 }
 
+# Définir le répertoire de base
+BASE_DIR="${HOME}/lpi-monitoring"
+
 # Créer les répertoires nécessaires avec les permissions adéquates
-mkdir -p ~/lpi-monitoring/grafana-storage
+mkdir -p "${BASE_DIR}/grafana-storage"
 check_command "Création du répertoire grafana-storage"
-sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/grafana-storage
-sudo chmod -R 777 ~/lpi-monitoring/grafana-storage
+sudo chown -R "$(id -u):$(id -g)" "${BASE_DIR}/grafana-storage"
+sudo chmod -R 750 "${BASE_DIR}/grafana-storage"
 
 # Créer le répertoire de configuration Grafana
-mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/dashboards
+mkdir -p "${BASE_DIR}/configs/grafana/provisioning/dashboards"
 check_command "Création du répertoire de configuration Grafana"
 
 # Créer un fichier de provisioning pour Grafana
-cat <<EOL > ~/lpi-monitoring/configs/grafana/provisioning/dashboards/dashboard.yaml
+cat <<EOL > "${BASE_DIR}/configs/grafana/provisioning/dashboards/dashboard.yaml"
 apiVersion: 1
 providers:
   - name: 'default'
@@ -34,14 +45,14 @@ EOL
 check_command "Création du fichier de provisioning pour Grafana"
 
 # Créer le fichier de configuration des datasources
-mkdir -p ~/lpi-monitoring/configs/grafana/provisioning/datasources
+mkdir -p "${BASE_DIR}/configs/grafana/provisioning/datasources"
 check_command "Création du répertoire des datasources"
 
 # Récupérer le token InfluxDB à partir de l'environnement
 INFLUXDB_TOKEN=$(influx auth list --json | jq -r '.[0].token')
 check_command "Récupération du token InfluxDB"
 
-cat <<EOF > ~/lpi-monitoring/configs/grafana/provisioning/datasources/datasource.yaml
+cat <<EOF > "${BASE_DIR}/configs/grafana/provisioning/datasources/datasource.yaml"
 apiVersion: 1
 datasources:
   - name: Prometheus
@@ -64,13 +75,13 @@ datasources:
       defaultBucket: logs
       version: Flux
     secureJsonData:
-      token: $INFLUXDB_TOKEN
+      token: ${INFLUXDB_TOKEN}
     editable: true
 EOF
 check_command "Création du fichier de configuration des datasources"
 
 # Créer un Dockerfile pour inclure les dashboards
-cat <<EOF > ~/lpi-monitoring/docker/grafana/Dockerfile
+cat <<EOF > "${BASE_DIR}/docker/grafana/Dockerfile"
 FROM grafana/grafana:latest
 COPY dashboards/ /var/lib/grafana/dashboards
 COPY configs/grafana/provisioning/dashboards /etc/grafana/provisioning/dashboards
@@ -79,16 +90,23 @@ EOF
 check_command "Création du Dockerfile pour Grafana"
 
 # Copier les dashboards JSON fournis dans le répertoire des dashboards
-cp ~/dashboards_grafana/*.json ~/lpi-monitoring/dashboards_grafana/grafana/
+cp "${HOME}/dashboards_grafana/"*.json "${BASE_DIR}/dashboards_grafana/grafana/"
 check_command "Copie des dashboards JSON"
 
 # Utiliser le fichier docker-compose spécifique pour Grafana
-docker compose -f ~/lpi-monitoring/docker/docker-compose-grafana.yml up -d --build
+docker compose -f "${BASE_DIR}/docker/docker-compose-grafana.yml" up -d --build
 check_command "Démarrage de Grafana avec Docker Compose"
 
 # Configuration de Logrotate pour l'archivage des logs
 LOGROTATE_CONF="/etc/logrotate.d/grafana_logs"
-sudo tee $LOGROTATE_CONF > /dev/null <<EOL
+ARCHIVE_DIR="/path/to/Archives_Logs/grafana_logs_archives/"
+
+# S'assurer que le répertoire d'archives existe
+sudo mkdir -p "$ARCHIVE_DIR"
+sudo chown grafana:grafana "$ARCHIVE_DIR"
+sudo chmod 750 "$ARCHIVE_DIR"
+
+sudo tee "$LOGROTATE_CONF" > /dev/null <<EOL
 /var/log/grafana/*.log {
     weekly
     missingok
@@ -96,8 +114,8 @@ sudo tee $LOGROTATE_CONF > /dev/null <<EOL
     compress
     delaycompress
     dateext
-    dateformat _Semaine_%V
-    olddir /path/to/Archives_Logs/grafana_logs_archives/
+    dateformat _%Y%m%d
+    olddir ${ARCHIVE_DIR}
     create 640 grafana grafana
     notifempty
     sharedscripts
@@ -107,3 +125,5 @@ sudo tee $LOGROTATE_CONF > /dev/null <<EOL
 }
 EOL
 check_command "Configuration de Logrotate pour Grafana"
+
+log "Installation et configuration de Grafana terminées avec succès."
