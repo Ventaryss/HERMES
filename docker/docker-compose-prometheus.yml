@@ -1,20 +1,43 @@
-version: '3'
+version: '3.8'
 
 services:
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - 9090:9090
+      - "9090:9090"
     volumes:
-      - ~/lpi-monitoring/prometheus-storage:/prometheus:rw
-      - ~/lpi-monitoring/configs/prometheus:/etc/prometheus:ro
+      - ${HOME}/lpi-monitoring/prometheus-storage:/prometheus:rw
+      - ${HOME}/lpi-monitoring/configs/prometheus:/etc/prometheus:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.external-url=http://localhost:9090'
     restart: unless-stopped
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    user: "65534:65534"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    networks:
+      - lpi_network
+
+networks:
+  lpi_network:
+    driver: bridge
