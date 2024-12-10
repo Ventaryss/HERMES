@@ -1,25 +1,36 @@
 #!/bin/bash
 
+# Activer le mode strict pour bash
+set -euo pipefail
+
+# Fonction de journalisation
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
 # Fonction pour vérifier l'exécution des commandes
 check_command() {
-    if [ $? -ne 0 ]; then
-        echo "Erreur : $1 a échoué." >&2
+    if [[ $? -ne 0 ]]; then
+        log "Erreur : $1 a échoué." >&2
         exit 1
     fi
 }
 
+# Définir le répertoire de base
+BASE_DIR="${HOME}/lpi-monitoring"
+
 # Créer les répertoires nécessaires avec les permissions adéquates
-mkdir -p ~/lpi-monitoring/prometheus-storage
+mkdir -p "${BASE_DIR}/prometheus-storage"
 check_command "Création du répertoire prometheus-storage"
-sudo chown -R $(whoami):$(whoami) ~/lpi-monitoring/prometheus-storage
-sudo chmod -R 777 ~/lpi-monitoring/prometheus-storage
+sudo chown -R "$(id -u):$(id -g)" "${BASE_DIR}/prometheus-storage"
+sudo chmod -R 750 "${BASE_DIR}/prometheus-storage"
 
 # Créer le répertoire de configuration Prometheus
-mkdir -p ~/lpi-monitoring/configs/prometheus
+mkdir -p "${BASE_DIR}/configs/prometheus"
 check_command "Création du répertoire de configuration Prometheus"
 
 # Créer un fichier de configuration Prometheus par défaut
-cat <<EOL > ~/lpi-monitoring/configs/prometheus/prometheus.yml
+cat <<EOL > "${BASE_DIR}/configs/prometheus/prometheus.yml"
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -52,12 +63,19 @@ EOL
 check_command "Création du fichier de configuration Prometheus"
 
 # Utiliser le fichier docker-compose spécifique pour Prometheus
-docker compose -f ~/lpi-monitoring/docker/docker-compose-prometheus.yml up -d
+docker compose -f "${BASE_DIR}/docker/docker-compose-prometheus.yml" up -d
 check_command "Démarrage de Prometheus avec Docker Compose"
 
 # Configuration de Logrotate pour l'archivage des logs
 LOGROTATE_CONF="/etc/logrotate.d/prometheus_logs"
-sudo tee $LOGROTATE_CONF > /dev/null <<EOL
+ARCHIVE_DIR="/path/to/Archives_Logs/prometheus_logs_archives/"
+
+# S'assurer que le répertoire d'archives existe
+sudo mkdir -p "$ARCHIVE_DIR"
+sudo chown prometheus:prometheus "$ARCHIVE_DIR"
+sudo chmod 750 "$ARCHIVE_DIR"
+
+sudo tee "$LOGROTATE_CONF" > /dev/null <<EOL
 /var/log/prometheus/*.log {
     weekly
     missingok
@@ -65,8 +83,8 @@ sudo tee $LOGROTATE_CONF > /dev/null <<EOL
     compress
     delaycompress
     dateext
-    dateformat _Semaine_%V
-    olddir /path/to/Archives_Logs/prometheus_logs_archives/
+    dateformat _%Y%m%d
+    olddir ${ARCHIVE_DIR}
     create 640 prometheus prometheus
     notifempty
     sharedscripts
@@ -76,3 +94,5 @@ sudo tee $LOGROTATE_CONF > /dev/null <<EOL
 }
 EOL
 check_command "Configuration de Logrotate pour Prometheus"
+
+log "Installation et configuration de Prometheus terminées avec succès."
