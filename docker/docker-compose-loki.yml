@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   loki:
@@ -6,9 +6,9 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ~/lpi-monitoring/loki-storage:/loki:rw
-      - ~/lpi-monitoring/configs/loki:/etc/loki:ro
-      - ~/lpi-monitoring/loki-wal:/wal:rw
+      - ${HOME}/lpi-monitoring/loki-storage:/loki:rw
+      - ${HOME}/lpi-monitoring/configs/loki:/etc/loki:ro
+      - ${HOME}/lpi-monitoring/loki-wal:/wal:rw
     command: -config.file=/etc/loki/loki-config.yaml
     environment:
       - LOKI_PATH=/loki
@@ -18,3 +18,22 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    user: "10001:10001"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    networks:
+      - lpi_network
+
+networks:
+  lpi_network:
+    driver: bridge
