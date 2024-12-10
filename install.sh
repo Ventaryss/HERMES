@@ -1,9 +1,16 @@
 #!/bin/bash
 
+set -eo pipefail
+
+# Fonction de journalisation
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
 # Fonction pour vérifier l'exécution des commandes
 check_command() {
-    if [ $? -ne 0 ]; then
-        echo "Erreur : $1 a échoué." >&2
+    if [[ $? -ne 0 ]]; then
+        log "Erreur : $1 a échoué." >&2
         exit 1
     fi
 }
@@ -11,32 +18,31 @@ check_command() {
 # Fonction pour vérifier si Docker est installé
 function check_docker_installed() {
     if ! command -v docker &> /dev/null; then
-        echo "Docker n'est pas installé. Installation de Docker..."
+        log "Docker n'est pas installé. Installation de Docker..."
         # Commandes pour installer Docker sur Debian
         sudo apt-get update
         sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
-        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
         sudo apt-get update
         sudo apt-get install -y docker-ce docker-ce-cli containerd.io
         sudo systemctl start docker
         sudo systemctl enable docker
         check_command "Installation de Docker"
     else
-        echo "Docker est déjà installé."
+        log "Docker est déjà installé."
     fi
 }
 
 # Fonction pour vérifier si Docker Compose est installé (plugin intégré à Docker)
 function check_docker_compose_installed() {
     if ! docker compose version &> /dev/null; then
-        echo "Docker Compose n'est pas installé. Installation de Docker Compose..."
-        # Commandes pour installer Docker Compose comme plugin Docker
+        log "Docker Compose n'est pas installé. Installation de Docker Compose..."
         sudo apt-get update
         sudo apt-get install -y docker-compose-plugin
         check_command "Installation de Docker Compose"
     else
-        echo "Docker Compose est déjà installé."
+        log "Docker Compose est déjà installé."
     fi
 }
 
@@ -46,12 +52,12 @@ check_docker_compose_installed
 
 # Vérifier l'installation de dos2unix
 if ! command -v dos2unix &> /dev/null; then
-    echo "dos2unix n'est pas installé. Installation de dos2unix..."
+    log "dos2unix n'est pas installé. Installation de dos2unix..."
     sudo apt-get update
     sudo apt-get install -y dos2unix
     check_command "Installation de dos2unix"
 else
-    echo "dos2unix est déjà installé."
+    log "dos2unix est déjà installé."
 fi
 
 # Convertir tous les scripts au format Unix pour éviter les problèmes d'encodage et donner les permissions d'exécution
@@ -71,7 +77,7 @@ function show_menu() {
     "Archivage" "Installer le script d'archivage des logs" ON \
     3>&1 1>&2 2>&3)
 
-    echo $SERVICES
+    echo "$SERVICES"
 }
 
 # Fonction pour installer un service
@@ -86,60 +92,56 @@ function install_service() {
         InfluxDB) ./scripts/install_influxdb.sh ;;
         Rsyslog) ./scripts/install_rsyslog.sh ;;
         Archivage) ./scripts/install_script_logs.sh ;;
-        *) echo "Option invalide: $service" ;;
+        *) log "Option invalide: $service" ;;
     esac
 }
 
 # Stop and remove existing Docker containers if they exist
 containers=$(docker ps -a -q --filter "name=loki" --filter "name=prometheus" --filter "name=grafana" --filter "name=influxdb" --filter "name=fluentd" --filter "name=promtail")
-if [ -n "$containers" ]; then
+if [[ -n "$containers" ]]; then
     docker stop $containers
     docker rm $containers
     check_command "Arrêt et suppression des conteneurs existants"
 else
-    echo "Aucun conteneur existant à arrêter ou supprimer."
+    log "Aucun conteneur existant à arrêter ou supprimer."
 fi
 
 # Créer les répertoires nécessaires
-mkdir -p ~/lpi-monitoring/loki-wal ~/lpi-monitoring/loki-logs \
-         ~/lpi-monitoring/dashboards_grafana/loki \
-         ~/lpi-monitoring/dashboards_grafana/prometheus \
-         ~/lpi-monitoring/dashboards_grafana/influxDB \
-         ~/lpi-monitoring/dashboards_grafana/pfsense \
-         ~/lpi-monitoring/pfsense-logs ~/lpi-monitoring/influxdb-storage
+mkdir -p ~/lpi-monitoring/{loki-wal,loki-logs,dashboards_grafana/{loki,prometheus,influxDB,pfsense},pfsense-logs,influxdb-storage}
 check_command "Création des répertoires nécessaires"
 
-# Définir les permissions pour root
-sudo chown -R root:root ~/lpi-monitoring/*
-sudo chmod -R 777 ~/lpi-monitoring/*
+# Définir les permissions pour root (plus restrictives)
+sudo chown -R root:root ~/lpi-monitoring
+sudo find ~/lpi-monitoring -type d -exec chmod 755 {} \;
+sudo find ~/lpi-monitoring -type f -exec chmod 644 {} \;
 check_command "Définition des permissions pour les répertoires de monitoring"
 
 # Créer les répertoires de logs dans /var/log
-sudo mkdir -p /var/log/pfsense /var/log/client_logs /var/log/stormshield /var/log/paloalto
-sudo chown -R root:root /var/log/*
-sudo chmod -R 777 /var/log/*
+sudo mkdir -p /var/log/{pfsense,client_logs,stormshield,paloalto}
+sudo chown -R root:root /var/log/{pfsense,client_logs,stormshield,paloalto}
+sudo chmod -R 755 /var/log/{pfsense,client_logs,stormshield,paloalto}
 check_command "Création et configuration des répertoires de logs dans /var/log"
 
 # Boucle de menu
 SERVICES=$(show_menu)
 
 # Supprimer les guillemets et les espaces de la sortie de whiptail
-SERVICES=$(echo $SERVICES | sed 's/"//g')
+SERVICES=$(echo "$SERVICES" | sed 's/"//g')
 
 # Tri des services pour garantir l'ordre d'installation
 declare -A order
 order=( ["InfluxDB"]=1 ["Grafana"]=2 ["Prometheus"]=3 ["Loki"]=4 ["Promtail"]=5 ["Fluentd"]=6 ["Rsyslog"]=7 ["Archivage"]=8 )
 IFS=$'\n'
-SERVICES=$(echo $SERVICES | tr ' ' '\n' | sort -k1,1 -k2,2n | while read service; do
+SERVICES=$(echo "$SERVICES" | tr ' ' '\n' | sort -k1,1 -k2,2n | while read -r service; do
     echo "${order[$service]} $service"
 done | sort -k1,1n | cut -d' ' -f2)
 
 for service in $SERVICES; do
-    install_service $service
+    install_service "$service"
 done
 
 # Attendre que les services démarrent
-echo -n "Vérification en cours"
+log "Vérification en cours"
 for ((i=0;i<10;i++)); do
     echo -n "."
     sleep 1
@@ -148,3 +150,5 @@ echo
 
 # Afficher l'état des services
 docker ps
+
+log "Installation terminée avec succès."
