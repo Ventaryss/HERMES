@@ -1,10 +1,30 @@
 #!/bin/bash
 
+# Activer le mode strict pour bash
+set -euo pipefail
+
+# Fonction de journalisation
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Fonction pour vérifier l'exécution des commandes
+check_command() {
+    if [[ $? -ne 0 ]]; then
+        log "Erreur : $1 a échoué." >&2
+        exit 1
+    fi
+}
+
+# Définir le répertoire de base
+BASE_DIR="${HOME}/lpi-monitoring"
+
 # Créer le répertoire de configuration Promtail
-mkdir -p ~/lpi-monitoring/configs/promtail
+mkdir -p "${BASE_DIR}/configs/promtail"
+check_command "Création du répertoire de configuration Promtail"
 
 # Créer un fichier de configuration Promtail par défaut
-cat <<EOL > ~/lpi-monitoring/configs/promtail/promtail-config.yaml
+cat <<EOL > "${BASE_DIR}/configs/promtail/promtail-config.yaml"
 server:
   http_listen_port: 9080
   grpc_listen_port: 9081
@@ -85,6 +105,10 @@ scrape_configs:
           host: __HOSTNAME__
           __path__: /var/log/client_logs/*.log
 EOL
+check_command "Création du fichier de configuration Promtail"
 
-# Use the specific docker-compose file for Promtail
-docker compose -f ~/lpi-monitoring/docker/docker-compose-promtail.yml up -d
+# Utiliser le fichier docker-compose spécifique pour Promtail
+docker compose -f "${BASE_DIR}/docker/docker-compose-promtail.yml" up -d
+check_command "Démarrage de Promtail avec Docker Compose"
+
+log "Installation et configuration de Promtail terminées avec succès."
