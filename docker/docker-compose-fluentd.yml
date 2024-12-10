@@ -1,17 +1,17 @@
-version: '3'
+version: '3.8'
 
 services:
   fluentd:
     image: grafana/fluent-plugin-loki:latest
     ports:
-      - 24224:24224
-      - 24224:24224/udp
+      - "24224:24224"
+      - "24224:24224/udp"
     volumes:
-      - ~/lpi-monitoring/configs/fluentd:/fluentd/etc:ro
-      - /var/log/pfsense:/var/log/pfsense:rw
+      - ${HOME}/lpi-monitoring/configs/fluentd:/fluentd/etc:ro
+      - /var/log/pfsense:/var/log/pfsense:ro
       - /path/to/Archives_Logs/fluentd_logs_archives:/fluentd/logs:rw
     environment:
-      - FLUENT_UID=0 # Assure les permissions root pour éviter les problèmes d'accès
+      - FLUENT_UID=0
     command: fluentd -c /fluentd/etc/fluent.conf --use-v1-config
     restart: unless-stopped
     logging:
@@ -19,3 +19,20 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    user: "0:0"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    networks:
+      - lpi_network
+
+networks:
+  lpi_network:
+    driver: bridge
