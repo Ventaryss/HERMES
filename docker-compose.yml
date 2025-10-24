@@ -4,8 +4,6 @@
 # Stack de monitoring complète avec Grafana, Prometheus, Loki, InfluxDB, Fluentd et Promtail
 # Tous les services partagent le même réseau pour une communication optimale
 
-version: '3.8'
-
 # Définition du réseau commun pour tous les services
 networks:
   hermes_network:
@@ -38,7 +36,7 @@ services:
       - "8086:8086"
     volumes:
       - influxdb-storage:/var/lib/influxdb2:rw
-      - ${BASE_DIR:-./}/configs/influxdb:/etc/influxdb2:rw
+      - ${BASE_DIR:-./}/config/influxdb:/etc/influxdb2:rw
     environment:
       # Configuration initiale InfluxDB 2.x
       - DOCKER_INFLUXDB_INIT_MODE=${INFLUXDB_INIT_MODE:-setup}
@@ -79,7 +77,7 @@ services:
     volumes:
       - loki-storage:/loki:rw
       - loki-wal:/wal:rw
-      - ${BASE_DIR:-./}/configs/loki:/etc/loki:ro
+      - ${BASE_DIR:-./}/config/loki:/etc/loki:ro
     command: -config.file=/etc/loki/loki-config.yaml
     environment:
       - TZ=${TZ:-UTC}
@@ -113,7 +111,7 @@ services:
       - "1514:1514/udp"
       - "9080:9080"
     volumes:
-      - ${BASE_DIR:-./}/configs/promtail:/etc/promtail:ro
+      - ${BASE_DIR:-./}/config/promtail:/etc/promtail:ro
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/promtail-config.yaml
@@ -145,7 +143,7 @@ services:
       - "9090:9090"
     volumes:
       - prometheus-storage:/prometheus:rw
-      - ${BASE_DIR:-./}/configs/prometheus:/etc/prometheus:ro
+      - ${BASE_DIR:-./}/config/prometheus:/etc/prometheus:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -185,8 +183,8 @@ services:
       - "3000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana:rw
-      - ${BASE_DIR:-./}/configs/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ${BASE_DIR:-./}/dashboards_grafana:/var/lib/grafana/dashboards:ro
+      - ${BASE_DIR:-./}/config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ${BASE_DIR:-./}/dashboards:/var/lib/grafana/dashboards:ro
     environment:
       # Configuration admin
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
@@ -241,44 +239,39 @@ services:
         ipv4_address: 172.20.0.6
 
   # ===========================================
-  # Fluentd - Collecteur de logs flexible
+  # Fluentd - Collecteur de logs flexible (OPTIONNEL)
   # ===========================================
-  fluentd:
-    image: grafana/fluent-plugin-loki:2.9.3
-    container_name: hermes-fluentd
-    ports:
-      - "24224:24224"
-      - "24224:24224/udp"
-      - "24225:24225"
-      - "24225:24225/udp"
-      - "24226:24226"
-      - "24226:24226/udp"
-    volumes:
-      - ${BASE_DIR:-./}/configs/fluentd:/fluentd/etc:ro
-      - /var/log/pfsense:/var/log/pfsense:ro
-      - /var/log/stormshield:/var/log/stormshield:ro
-      - /var/log/paloalto:/var/log/paloalto:ro
-      - ${ARCHIVES_DIR:-./Archives_Logs}/fluentd_logs:/fluentd/logs:rw
-    environment:
-      - FLUENT_UID=0
-      - LOKI_URL=http://loki:3100
-      - TZ=${TZ:-UTC}
-    command: fluentd -c /fluentd/etc/fluent.conf
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    user: "0:0"
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      loki:
-        condition: service_healthy
-    networks:
-      hermes_network:
-        ipv4_address: 172.20.0.7
+  # Décommentez cette section si vous avez besoin de Fluentd
+  # et créez un Dockerfile custom avec le plugin Loki
+  # 
+  # fluentd:
+  #   image: fluent/fluentd:v1.16-debian-1
+  #   container_name: hermes-fluentd
+  #   ports:
+  #     - "24224:24224"
+  #     - "24224:24224/udp"
+  #   volumes:
+  #     - ${BASE_DIR:-./}/configs/fluentd:/fluentd/etc:ro
+  #     - ${ARCHIVES_DIR:-./archives}/fluentd_logs:/fluentd/logs:rw
+  #   environment:
+  #     - FLUENT_UID=0
+  #     - LOKI_URL=http://loki:3100
+  #     - TZ=${TZ:-UTC}
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   user: "0:0"
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   depends_on:
+  #     loki:
+  #       condition: service_healthy
+  #   networks:
+  #     hermes_network:
+  #       ipv4_address: 172.20.0.7
 
   # ===========================================
   # Node Exporter - Métriques système (optionnel)

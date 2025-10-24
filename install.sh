@@ -496,52 +496,28 @@ install_dependencies() {
     success "Dépendances installées"
 }
 
-# ═══════════════════════════
-# CONFIGURATION
-# ═══════════════════════════
-
-create_directory_structure() {
+create_directories() {
     section_title "Création de la structure"
     
-    local dirs=(
-        "${BASE_DIR}/config"
-        "${BASE_DIR}/config/grafana/provisioning/dashboards"
-        "${BASE_DIR}/config/grafana/provisioning/datasources"
-        "${BASE_DIR}/config/loki"
-        "${BASE_DIR}/config/prometheus/alerts"
-        "${BASE_DIR}/config/promtail"
-        "${BASE_DIR}/config/fluentd"
-        "${BASE_DIR}/config/influxdb"
-        "${BASE_DIR}/dashboards"
-        "${BASE_DIR}/archives/pfsense"
-        "${BASE_DIR}/archives/stormshield"
-        "${BASE_DIR}/archives/paloalto"
-        "${BASE_DIR}/archives/clients"
-    )
-    
-    local total=${#dirs[@]}
-    local current=0
-    
-    for dir in "${dirs[@]}"; do
-        if ! mkdir -p "$dir" 2>/dev/null; then
-            error "Impossible de créer le répertoire: $dir"
-            return 1
-        fi
-        ((current++))
-        progress_bar $current $total
-        sleep 0.05
-    done
-    
-    echo
-    
-    # Créer répertoires système
     info "Création des répertoires système..."
+    
+    # Répertoires principaux
+    mkdir -p "${BASE_DIR}"/{config,dashboards,scripts,archives}
+    mkdir -p "${BASE_DIR}/config"/{grafana/provisioning/{datasources,dashboards},prometheus,loki,promtail,influxdb,fluentd}
+    
+    # Répertoires d'archives
+    mkdir -p "${BASE_DIR}/archives"/{rsyslog,fluentd_logs,old_archives}
+    
+    # Répertoires système
     if ! sudo mkdir -p /var/log/{pfsense,stormshield,paloalto,client_logs} 2>/dev/null; then
         warning "Impossible de créer les répertoires système dans /var/log (permissions?)"
         info "Les logs seront stockés uniquement dans ${BASE_DIR}/archives"
     else
         sudo chmod -R 755 /var/log/{pfsense,stormshield,paloalto,client_logs} 2>/dev/null || true
     fi
+    
+    # Permissions correctes
+    chmod -R 755 "${BASE_DIR}"
     
     success "Structure créée: ${BASE_DIR}"
 }
@@ -559,15 +535,26 @@ setup_env_file() {
             fi
             sed -i "s|BASE_DIR=.*|BASE_DIR=${BASE_DIR}|" "${BASE_DIR}/.env" 2>/dev/null || true
             sed -i "s|ARCHIVES_DIR=.*|ARCHIVES_DIR=${BASE_DIR}/archives|" "${BASE_DIR}/.env" 2>/dev/null || true
+            
+            # Générer un token InfluxDB aléatoire si vide
+            if grep -q "INFLUXDB_INIT_ADMIN_TOKEN=$" "${BASE_DIR}/.env"; then
+                info "Génération du token InfluxDB..."
+                local influx_token=$(openssl rand -hex 32)
+                sed -i "s|INFLUXDB_INIT_ADMIN_TOKEN=|INFLUXDB_INIT_ADMIN_TOKEN=${influx_token}|" "${BASE_DIR}/.env"
+                success "Token InfluxDB généré"
+            fi
+            
             success "Fichier .env créé"
             warning "N'oubliez pas de modifier les mots de passe dans ${BASE_DIR}/.env"
         else
             warning "Fichier .env.example introuvable dans ${SCRIPT_DIR}"
             info "Création d'un fichier .env minimal..."
+            local influx_token=$(openssl rand -hex 32)
             cat > "${BASE_DIR}/.env" << EOF
 # Configuration HERMES
 BASE_DIR=${BASE_DIR}
 ARCHIVES_DIR=${BASE_DIR}/archives
+INFLUXDB_INIT_ADMIN_TOKEN=${influx_token}
 EOF
             success "Fichier .env minimal créé"
         fi
@@ -580,36 +567,60 @@ cleanup_containers() {
     section_title "Nettoyage"
     
     if docker ps -a --filter "name=hermes-" --format "{{.Names}}" | grep -q "hermes-"; then
-        info "Arrêt des conteneurs existants..."
+        info "Nettoyage de l'installation précédente..."
+        
+        # Arrêter et supprimer les conteneurs
         LAST_LOG=$(mktemp /tmp/hermes_cleanup_XXXX.log)
-        docker ps -a --filter "name=hermes-" --format "{{.Names}}" | xargs -r docker stop > "$LAST_LOG" 2>&1 &
-        spinner $! "Arrêt des conteneurs" || { rm -f "$LAST_LOG"; unset LAST_LOG; return 1; }
-        docker ps -a --filter "name=hermes-" --format "{{.Names}}" | xargs -r docker rm >/dev/null 2>&1
+        docker ps -a --filter "name=hermes-" --format "{{.Names}}" | xargs -r docker stop > "$LAST_LOG" 2>&1
+        docker ps -a --filter "name=hermes-" --format "{{.Names}}" | xargs -r docker rm >> "$LAST_LOG" 2>&1
         rm -f "$LAST_LOG"
         unset LAST_LOG
-        success "Conteneurs nettoyés"
+        
+        # Supprimer les volumes pour une installation propre
+        docker volume rm hermes-grafana-storage hermes-loki-storage hermes-loki-wal hermes-prometheus-storage hermes-influxdb-storage >/dev/null 2>&1 || true
+        
+        success "Nettoyage terminé"
     else
         info "Aucun conteneur à nettoyer"
+        success "Environnement propre"
     fi
 }
 
 generate_configs() {
     section_title "Génération des configurations"
     
-    local scripts=("loki" "prometheus" "promtail" "fluentd" "rsyslog" "grafana" "influxdb")
-    local total=${#scripts[@]}
-    local current=0
+    info "Copie des fichiers de configuration..."
     
-    for script in "${scripts[@]}"; do
-        if [[ -f "${SCRIPT_DIR}/scripts/setup-${script}.sh" ]]; then
-            bash "${SCRIPT_DIR}/scripts/setup-${script}.sh" config_only >/dev/null 2>&1 || true
-        fi
-        ((current++))
-        progress_bar $current $total
-        sleep 0.1
-    done
+    # Copier tous les fichiers de configuration depuis le repo vers BASE_DIR
+    if [[ -d "${SCRIPT_DIR}/config" ]]; then
+        cp -r "${SCRIPT_DIR}/config"/* "${BASE_DIR}/config/" 2>/dev/null || true
+    fi
     
-    echo
+    # Copier les dashboards
+    if [[ -d "${SCRIPT_DIR}/dashboards" ]]; then
+        cp -r "${SCRIPT_DIR}/dashboards"/* "${BASE_DIR}/dashboards/" 2>/dev/null || true
+    fi
+    
+    # Copier les scripts
+    if [[ -d "${SCRIPT_DIR}/scripts" ]]; then
+        cp -r "${SCRIPT_DIR}/scripts"/* "${BASE_DIR}/scripts/" 2>/dev/null || true
+        chmod +x "${BASE_DIR}/scripts"/*.sh 2>/dev/null || true
+    fi
+    
+    # Fixer les permissions des volumes Docker
+    info "Configuration des permissions des volumes Docker..."
+    docker volume create hermes-loki-storage >/dev/null 2>&1 || true
+    docker volume create hermes-loki-wal >/dev/null 2>&1 || true
+    docker volume create hermes-grafana-storage >/dev/null 2>&1 || true
+    docker volume create hermes-prometheus-storage >/dev/null 2>&1 || true
+    docker volume create hermes-influxdb-storage >/dev/null 2>&1 || true
+    
+    # Fixer les permissions avec des conteneurs temporaires
+    docker run --rm -v hermes-loki-storage:/data alpine sh -c "chown -R 10001:10001 /data && chmod -R 755 /data" 2>/dev/null || true
+    docker run --rm -v hermes-loki-wal:/data alpine sh -c "chown -R 10001:10001 /data && chmod -R 755 /data" 2>/dev/null || true
+    docker run --rm -v hermes-grafana-storage:/data alpine sh -c "chown -R 472:472 /data && chmod -R 755 /data" 2>/dev/null || true
+    docker run --rm -v hermes-prometheus-storage:/data alpine sh -c "chown -R 65534:65534 /data && chmod -R 755 /data" 2>/dev/null || true
+    
     success "Configurations générées"
 }
 
@@ -621,7 +632,6 @@ start_services() {
     # Copier docker-compose.yml
     if [[ -f "docker-compose.yml" ]]; then
         cp "docker-compose.yml" "${BASE_DIR}/"
-        success "Docker Compose copié"
     fi
     
     # Démarrer les services
@@ -658,7 +668,7 @@ wait_for_services() {
     done
     
     echo
-    success "Services opérationnels"
+    success "Tous les services sont opérationnels"
 }
 
 # ══════════════════════════════
@@ -669,6 +679,33 @@ show_final_status() {
     local install_end_time=$(date +%s)
     local duration=$((install_end_time - INSTALL_START_TIME))
     
+    # Vérification de l'état des services Docker avant d'afficher le succès
+    echo
+    info "Vérification de l'état des services Docker..."
+    sleep 3  # Attendre que les services démarrent
+    
+    cd "$BASE_DIR"
+    local services_status=$(docker compose ps --format json 2>&1)
+    local all_running=true
+    
+    # Vérifier si tous les services sont en état "running"
+    if ! docker compose ps | grep -q "Up"; then
+        all_running=false
+    fi
+    
+    if [ "$all_running" = false ]; then
+        echo
+        error "Certains services Docker ne sont pas démarrés correctement !"
+        echo
+        warning "État des services :"
+        docker compose ps
+        echo
+        error "Consultez les logs avec : cd $BASE_DIR && docker compose logs"
+        echo
+        exit 1
+    fi
+    
+    # Si tout est OK, on affiche le résumé avec clear
     clear
     show_banner
     
@@ -687,12 +724,16 @@ show_final_status() {
     
     echo -e "${CYAN}${BOLD}📊 Accès aux interfaces :${NC}"
     echo
-    echo -e "  ${SHIELD} ${BOLD}Grafana${NC}     : ${BLUE}http://localhost:3000${NC}"
-    echo -e "                 ${DIM}Identifiants: admin / admin${NC}"
+    echo -e "  ${SHIELD} ${BOLD}Grafana${NC}     : ${BLUE}http://127.0.0.1:3000${NC}"
+    echo -e "                 ${DIM}Identifiants: ${GREEN}admin${NC} / ${GREEN}admin${NC}${NC}"
     echo
-    echo -e "  ${GEAR} ${BOLD}Prometheus${NC}  : ${BLUE}http://localhost:9090${NC}"
-    echo -e "  ${GEAR} ${BOLD}Loki${NC}        : ${BLUE}http://localhost:3100${NC}"
-    echo -e "  ${GEAR} ${BOLD}InfluxDB${NC}    : ${BLUE}http://localhost:8086${NC}"
+    echo -e "  ${GEAR} ${BOLD}Prometheus${NC}  : ${BLUE}http://127.0.0.1:9090${NC}"
+    echo -e "  ${GEAR} ${BOLD}Loki${NC}        : ${BLUE}http://127.0.0.1:3100/ready${NC}"
+    echo -e "                 ${DIM}(Pas d'interface web, utiliser via Grafana)${NC}"
+    echo
+    echo -e "  ${GEAR} ${BOLD}InfluxDB${NC}    : ${BLUE}http://127.0.0.1:8086${NC}"
+    echo -e "                 ${DIM}Identifiants: ${GREEN}admin${NC} / ${GREEN}changeme_influx_password${NC}${NC}"
+    echo -e "                 ${DIM}Organisation: ${GREEN}hermes${NC} | Bucket: ${GREEN}logs${NC}${NC}"
     echo
     separator
     echo
@@ -760,23 +801,17 @@ main() {
     show_system_info
     echo
     
-    pause_with_countdown 3 "Début de l'installation"
-    
     # Installation
     install_docker
     install_dependencies
     
     # Configuration
-    create_directory_structure
+    create_directories
     setup_env_file
-    
-    pause_with_countdown 2 "Préparation de l'installation"
     
     # Nettoyage et génération
     cleanup_containers
     generate_configs
-    
-    pause_with_countdown 2 "Lancement des services"
     
     # Démarrage
     start_services
