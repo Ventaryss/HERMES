@@ -83,7 +83,7 @@ Centralisation • Temps réel • Multi-sources • Haute disponibilité
 
 ### Infrastructure
 - 🐳 **Docker Compose** - Orchestration simplifiée
-- �� **Réseau unifié** - Communication optimisée
+- 🦴 **Réseau unifié** - Communication optimisée
 - 🏥 **Healthchecks** - Surveillance état
 - 💾 **Volumes persistants** - Aucune perte de données
 - 🔄 **Auto-restart** - Haute disponibilité
