@@ -8,10 +8,10 @@
 
 ---
 
-[\![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)]()
-[\![Docker](https://img.shields.io/badge/docker-ready-success.svg)]()
-[\![License](https://img.shields.io/badge/license-MIT-green.svg)]()
-[\![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)]()
+[![Docker](https://img.shields.io/badge/docker-ready-success.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-green.svg)]()
+[![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)]()
 
 **Solution professionnelle de monitoring** pour vos infrastructures IT  
 Centralisation • Temps réel • Multi-sources • Haute disponibilité
@@ -32,7 +32,7 @@ Centralisation • Temps réel • Multi-sources • Haute disponibilité
 - [💻 Installation client](#-installation-client)
 - [🔥 Firewalls](#-firewalls)
 - [🛠️ Maintenance](#️-maintenance)
-- [�� Dépannage](#-dépannage)
+- [🔍 Dépannage](#dépannage)
 - [💬 Support](#-support)
 
 ---
@@ -49,7 +49,7 @@ Centralisation • Temps réel • Multi-sources • Haute disponibilité
 | 📝 **Logs** | Agrégation depuis applications, systèmes |
 | 🛡️ **Sécurité** | Collecte logs firewalls (pfSense, Palo Alto, Stormshield) |
 | 🔔 **Alerting** | Notifications automatiques sur incidents |
-| �� **Forensique** | Recherche et corrélation d'événements |
+| 🕵️ **Forensique** | Recherche et corrélation d'événements |
 
 ### Pourquoi HERMES ?
 
