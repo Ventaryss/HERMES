@@ -725,7 +725,7 @@ show_final_status() {
     echo -e "${CYAN}${BOLD}📊 Accès aux interfaces :${NC}"
     echo
     echo -e "  ${SHIELD} ${BOLD}Grafana${NC}     : ${BLUE}http://127.0.0.1:3000${NC}"
-    echo -e "                 ${DIM}Identifiants: ${GREEN}admin${NC} / ${GREEN}admin${NC}${NC}"
+    echo -e "                 ${DIM}Identifiants: ${GREEN}admin${NC} / ${GREEN}changeme_admin_password${NC}${NC}"
     echo
     echo -e "  ${GEAR} ${BOLD}Prometheus${NC}  : ${BLUE}http://127.0.0.1:9090${NC}"
     echo -e "  ${GEAR} ${BOLD}Loki${NC}        : ${BLUE}http://127.0.0.1:3100/ready${NC}"
