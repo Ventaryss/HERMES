@@ -1,0 +1,28 @@
+# Credentials sensibles
+.env
+.credentials_backup
+*credentials*.txt
+
+# Logs
+logs/
+*.log
+
+# Backups
+backups/
+*.backup*
+.env.backup-*
+
+# Docker volumes data
+volumes/
+
+# Sources config
+config/sources.json
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

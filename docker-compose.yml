@@ -1,0 +1,439 @@
+# ===========================================
+# HERMES Stack - Docker Compose
+# ===========================================
+# Stack de monitoring complète avec Grafana, Prometheus, Loki, InfluxDB, Fluentd et Promtail
+# Tous les services partagent le même réseau pour une communication optimale
+
+# Définition du réseau commun pour tous les services
+networks:
+  hermes_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Volumes nommés pour une meilleure gestion
+volumes:
+  grafana-storage:
+    driver: local
+  prometheus-storage:
+    driver: local
+  loki-storage:
+    driver: local
+  loki-wal:
+    driver: local
+  influxdb-storage:
+    driver: local
+  wazuh-indexer-data:
+    driver: local
+  wazuh-manager-data:
+    driver: local
+  wazuh-manager-logs:
+    driver: local
+  wazuh-manager-etc:
+    driver: local
+
+services:
+  # ===========================================
+  # InfluxDB - Base de données time-series
+  # ===========================================
+  influxdb:
+    image: influxdb:2.7
+    container_name: hermes-influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-storage:/var/lib/influxdb2:rw
+      - ${BASE_DIR:-./}/config/influxdb:/etc/influxdb2:rw
+    environment:
+      # Configuration initiale InfluxDB 2.x
+      - DOCKER_INFLUXDB_INIT_MODE=${INFLUXDB_INIT_MODE:-setup}
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_INIT_USERNAME:-admin}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_INIT_PASSWORD:-adminadmin123}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_INIT_ORG:-hermes}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_INIT_BUCKET:-logs}
+      - DOCKER_INFLUXDB_INIT_RETENTION=${INFLUXDB_INIT_RETENTION:-30d}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_INIT_ADMIN_TOKEN}
+      - DOCKER_INFLUXDB_INIT_CLI_CONFIG_NAME=${INFLUXDB_CLI_CONFIG_NAME:-hermes-config}
+      - INFLUXD_REPORTING_DISABLED=true
+      - TZ=${TZ:-UTC}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.2
+
+  # ===========================================
+  # Loki - Agrégation de logs
+  # ===========================================
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: hermes-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-storage:/loki:rw
+      - loki-wal:/wal:rw
+      - ${BASE_DIR:-./}/config/loki:/etc/loki:ro
+    command: -config.file=/etc/loki/loki-config.yaml
+    environment:
+      - TZ=${TZ:-UTC}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    user: "${LOKI_UID:-10001}:${LOKI_GID:-10001}"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.3
+
+  # ===========================================
+  # Promtail - Collecteur de logs pour Loki
+  # ===========================================
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: hermes-promtail
+    ports:
+      - "1514:1514"
+      - "1514:1514/udp"
+      - "9080:9080"
+    volumes:
+      - ${BASE_DIR:-./}/config/promtail:/etc/promtail:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    environment:
+      - TZ=${TZ:-UTC}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    user: "0:0"  # Root nécessaire pour lire les logs système
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      loki:
+        condition: service_healthy
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.4
+
+  # ===========================================
+  # Prometheus - Collecte de métriques
+  # ===========================================
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: hermes-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-storage:/prometheus:rw
+      - ${BASE_DIR:-./}/config/prometheus:/etc/prometheus:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
+      - '--web.external-url=http://localhost:9090'
+    environment:
+      - TZ=${TZ:-UTC}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    user: "${PROMETHEUS_UID:-65534}:${PROMETHEUS_GID:-65534}"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.5
+
+  # ===========================================
+  # Grafana - Visualisation et dashboards
+  # ===========================================
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: hermes-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana:rw
+      - ${BASE_DIR:-./}/config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ${BASE_DIR:-./}/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      # Configuration admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      
+      # Chemins
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_PATHS_DATA=/var/lib/grafana
+      - GF_PATHS_LOGS=/var/log/grafana
+      - GF_PATHS_PLUGINS=/var/lib/grafana/plugins
+      
+      # Sécurité renforcée
+      - GF_SECURITY_ALLOW_EMBEDDING=false
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_COOKIE_SAMESITE=lax
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION=false
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      
+      # Logging
+      - GF_LOG_MODE=console
+      - GF_LOG_LEVEL=info
+      
+      # Timezone
+      - TZ=${TZ:-UTC}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    user: "${GRAFANA_UID:-472}:${GRAFANA_GID:-472}"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.6
+
+  # ===========================================
+  # Fluentd - Collecteur de logs flexible (OPTIONNEL)
+  # ===========================================
+  # Décommentez cette section si vous avez besoin de Fluentd
+  # et créez un Dockerfile custom avec le plugin Loki
+  # 
+  # fluentd:
+  #   image: fluent/fluentd:v1.16-debian-1
+  #   container_name: hermes-fluentd
+  #   ports:
+  #     - "24224:24224"
+  #     - "24224:24224/udp"
+  #   volumes:
+  #     - ${BASE_DIR:-./}/configs/fluentd:/fluentd/etc:ro
+  #     - ${ARCHIVES_DIR:-./archives}/fluentd_logs:/fluentd/logs:rw
+  #   environment:
+  #     - FLUENT_UID=0
+  #     - LOKI_URL=http://loki:3100
+  #     - TZ=${TZ:-UTC}
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   user: "0:0"
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   depends_on:
+  #     loki:
+  #       condition: service_healthy
+  #   networks:
+  #     hermes_network:
+  #       ipv4_address: 172.20.0.7
+
+  # ===========================================
+  # Node Exporter - Métriques système (optionnel)
+  # ===========================================
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: hermes-node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro,rslave
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    environment:
+      - TZ=${TZ:-UTC}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.8
+
+  # ===========================================
+  # Wazuh Indexer - Backend de stockage (OpenSearch)
+  # ===========================================
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.7.2
+    container_name: hermes-wazuh-indexer
+    hostname: wazuh-indexer
+    ports:
+      - "9200:9200"
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "bootstrap.memory_lock=true"
+      - "discovery.type=single-node"
+      - "network.host=0.0.0.0"
+      - "INDEXER_PASSWORD=${WAZUH_INDEXER_PASSWORD:-SecIndexerPassword123!}"
+    volumes:
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ${BASE_DIR:-./}/config/wazuh/indexer/opensearch.yml:/usr/share/wazuh-indexer/opensearch.yml:ro
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -k -u admin:${WAZUH_INDEXER_PASSWORD:-SecIndexerPassword123!} https://localhost:9200 | grep -q '\"status\" : 200'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.10
+
+  # ===========================================
+  # Wazuh Manager - Moteur d'analyse de sécurité
+  # ===========================================
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.7.2
+    container_name: hermes-wazuh-manager
+    hostname: wazuh-manager
+    ports:
+      - "1514:1514"       # Agent connection (TCP)
+      - "1515:1515"       # Agent enrollment
+      - "514:514/udp"     # Syslog collector
+      - "55000:55000"     # API REST
+    environment:
+      - INDEXER_URL=https://wazuh-indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=${WAZUH_INDEXER_PASSWORD:-SecIndexerPassword123!}
+      - FILEBEAT_SSL_VERIFICATION_MODE=none
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+      - API_USERNAME=${WAZUH_API_USER:-wazuh-api}
+      - API_PASSWORD=${WAZUH_API_PASSWORD:-SecWazuhApiPassword123!}
+    volumes:
+      - wazuh-manager-data:/var/ossec/data
+      - wazuh-manager-logs:/var/ossec/logs
+      - wazuh-manager-etc:/var/ossec/etc
+      - ${BASE_DIR:-./}/config/wazuh/manager/ossec.conf:/wazuh-config-mount/etc/ossec.conf:ro
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      wazuh-indexer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status | grep -q 'is running'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.11
+
+  # ===========================================
+  # Wazuh Dashboard - Interface web de sécurité
+  # ===========================================
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.7.2
+    container_name: hermes-wazuh-dashboard
+    hostname: wazuh-dashboard
+    ports:
+      - "5601:5601"
+    environment:
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=${WAZUH_INDEXER_PASSWORD:-SecIndexerPassword123!}
+      - WAZUH_API_URL=https://wazuh-manager:55000
+      - API_USERNAME=${WAZUH_API_USER:-wazuh-api}
+      - API_PASSWORD=${WAZUH_API_PASSWORD:-SecWazuhApiPassword123!}
+      - DASHBOARD_USERNAME=${WAZUH_DASHBOARD_USER:-admin}
+      - DASHBOARD_PASSWORD=${WAZUH_DASHBOARD_PASSWORD:-SecDashPassword123!}
+    volumes:
+      - ${BASE_DIR:-./}/config/wazuh/dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      wazuh-manager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:5601/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    networks:
+      hermes_network:
+        ipv4_address: 172.20.0.12
